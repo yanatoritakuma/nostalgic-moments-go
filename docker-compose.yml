@@ -9,6 +9,8 @@ services:
       POSTGRES_PASSWORD: yanatori
       POSTGRES_DB: nostalgic-moments-db
     restart: always
+    networks:
+      - backend
   app:
     build: .
     ports:
@@ -19,3 +21,7 @@ services:
       DB_USER: root
       DB_PASSWORD: password
       DB_NAME: nostalgic-moments-db
+    networks:
+      - backend
+networks:
+  backend:
