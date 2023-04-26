@@ -72,7 +72,7 @@ func (pr *postRepositor) CreatePost(post *model.Post) error {
 }
 
 func (pr *postRepositor) UpdatePost(post *model.Post, userId uint, postId uint) error {
-	result := pr.db.Model(post).Clauses(clause.Returning{}).Where("id=? AND use_id=?", postId, userId).Updates(map[string]interface{}{
+	result := pr.db.Model(post).Clauses(clause.Returning{}).Where("id=? AND user_id=?", postId, userId).Updates(map[string]interface{}{
 		"text":       post.Text,
 		"image":      post.Image,
 		"Prefecture": post.Prefecture,

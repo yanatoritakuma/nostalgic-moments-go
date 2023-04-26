@@ -1,9 +1,9 @@
 package usecase
 
 import (
-	"fmt"
 	"nostalgic-moments-go/model"
 	"nostalgic-moments-go/repository"
+	"nostalgic-moments-go/validator"
 )
 
 type IPostUsecase interface {
@@ -18,10 +18,11 @@ type IPostUsecase interface {
 
 type postUsecase struct {
 	pr repository.IPostRepository
+	pv validator.IPostValidator
 }
 
-func NewPostUsecase(pr repository.IPostRepository) IPostUsecase {
-	return &postUsecase{pr}
+func NewPostUsecase(pr repository.IPostRepository, pv validator.IPostValidator) IPostUsecase {
+	return &postUsecase{pr, pv}
 }
 
 func (pu *postUsecase) GetAllPosts() ([]model.PostResponse, error) {
@@ -102,7 +103,6 @@ func (pu *postUsecase) GetMyPosts(userId uint) ([]model.PostResponse, error) {
 			UserId: v.UserId,
 		}
 		resPosts = append(resPosts, p)
-		fmt.Println("1", v.User)
 	}
 	return resPosts, nil
 }
@@ -139,6 +139,9 @@ func (pu *postUsecase) GetPrefecturePosts(prefecture string) ([]model.PostRespon
 }
 
 func (pu *postUsecase) CreatePost(post model.Post) (model.PostResponse, error) {
+	if err := pu.pv.PostValidator(post); err != nil {
+		return model.PostResponse{}, err
+	}
 	if err := pu.pr.CreatePost(&post); err != nil {
 		return model.PostResponse{}, err
 	}
@@ -160,6 +163,9 @@ func (pu *postUsecase) CreatePost(post model.Post) (model.PostResponse, error) {
 }
 
 func (pu *postUsecase) UpdatePost(post model.Post, userId uint, postId uint) (model.PostResponse, error) {
+	if err := pu.pv.PostValidator(post); err != nil {
+		return model.PostResponse{}, err
+	}
 	if err := pu.pr.UpdatePost(&post, userId, postId); err != nil {
 		return model.PostResponse{}, err
 	}
