@@ -1,30 +1,24 @@
 package main
 
 import (
-	"net/http"
-
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"nostalgic-moments-go/controller"
+	"nostalgic-moments-go/db"
+	"nostalgic-moments-go/repository"
+	"nostalgic-moments-go/router"
+	"nostalgic-moments-go/usecase"
+	"nostalgic-moments-go/validator"
 )
 
-var e = createMux()
-
 func main() {
-	e.GET("/", articleIndex)
-
+	db := db.NewDB()
+	userValidator := validator.NewUserValidator()
+	postValidator := validator.NewPostValidator()
+	userRepository := repository.NewUserRepository(db)
+	postRepositor := repository.NewPostRepository(db)
+	userUsecase := usecase.NweUserUsecase(userRepository, userValidator)
+	postUsecase := usecase.NewPostUsecase(postRepositor, postValidator)
+	userController := controller.NewUserController(userUsecase)
+	postController := controller.NewPostController(postUsecase)
+	e := router.NewRouter(userController, postController)
 	e.Logger.Fatal(e.Start(":8080"))
-}
-
-func createMux() *echo.Echo {
-	e := echo.New()
-
-	e.Use(middleware.Recover())
-	e.Use(middleware.Logger())
-	e.Use(middleware.Gzip())
-
-	return e
-}
-
-func articleIndex(c echo.Context) error {
-	return c.String(http.StatusOK, "Hello, World!")
 }
