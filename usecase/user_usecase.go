@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"fmt"
 	"nostalgic-moments-go/model"
 	"nostalgic-moments-go/repository"
 	"nostalgic-moments-go/validator"
@@ -14,6 +15,7 @@ import (
 type IUserUsecase interface {
 	SignUp(user model.User) (model.UserResponse, error)
 	Login(user model.User) (string, error)
+	GetLoggedInUser(tokenString string) (*model.UserResponse, error)
 }
 
 type userUsecase struct {
@@ -65,4 +67,36 @@ func (uu *userUsecase) Login(user model.User) (string, error) {
 		return "", err
 	}
 	return tokenString, nil
+}
+
+func (uu *userUsecase) GetLoggedInUser(tokenString string) (*model.UserResponse, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(os.Getenv("SECRET")), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		userID, ok := claims["user_id"].(float64)
+		if !ok {
+			return nil, fmt.Errorf("invalid user ID in JWT token")
+		}
+		user := model.User{}
+		err = uu.ur.GetUserByID(&user, uint(userID))
+		if err != nil {
+			return nil, err
+		}
+		return &model.UserResponse{
+			ID:        user.ID,
+			Name:      user.Name,
+			Image:     user.Image,
+			Admin:     user.Admin,
+			CreatedAt: user.CreatedAt,
+		}, nil
+	} else {
+		return nil, fmt.Errorf("invalid JWT token")
+	}
 }

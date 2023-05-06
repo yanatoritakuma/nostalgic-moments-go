@@ -14,9 +14,9 @@ type User struct {
 }
 
 type UserResponse struct {
-	ID        uint      `json:"id" gorm:"primaryKey"`
+	ID        uint      `json:"id"`
 	Name      string    `json:"name"`
 	Image     string    `json:"image"`
 	Admin     bool      `json:"admin"`
-	CreatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP"`
+	CreatedAt time.Time `json:"created_at"`
 }
