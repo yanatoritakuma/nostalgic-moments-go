@@ -38,6 +38,7 @@ func (pu *postUsecase) GetAllPosts() ([]model.PostResponse, error) {
 		}
 		p := model.PostResponse{
 			ID:         v.ID,
+			Title:      v.Title,
 			Text:       v.Text,
 			Image:      v.Image,
 			Prefecture: v.Prefecture,
@@ -66,6 +67,7 @@ func (pu *postUsecase) GetPostById(postId uint) (model.PostResponse, error) {
 	}
 	resPost := model.PostResponse{
 		ID:         post.ID,
+		Title:      post.Title,
 		Text:       post.Text,
 		Image:      post.Image,
 		Prefecture: post.Prefecture,
@@ -90,6 +92,7 @@ func (pu *postUsecase) GetMyPosts(userId uint) ([]model.PostResponse, error) {
 	for _, v := range posts {
 		p := model.PostResponse{
 			ID:         v.ID,
+			Title:      v.Title,
 			Text:       v.Text,
 			Image:      v.Image,
 			Prefecture: v.Prefecture,
@@ -120,6 +123,7 @@ func (pu *postUsecase) GetPrefecturePosts(prefecture string) ([]model.PostRespon
 		}
 		p := model.PostResponse{
 			ID:         v.ID,
+			Title:      v.Title,
 			Text:       v.Text,
 			Image:      v.Image,
 			Prefecture: v.Prefecture,
@@ -147,6 +151,7 @@ func (pu *postUsecase) CreatePost(post model.Post) (model.PostResponse, error) {
 	}
 	resPost := model.PostResponse{
 		ID:         post.ID,
+		Title:      post.Title,
 		Text:       post.Text,
 		Image:      post.Image,
 		Prefecture: post.Prefecture,
@@ -171,6 +176,7 @@ func (pu *postUsecase) UpdatePost(post model.Post, userId uint, postId uint) (mo
 	}
 	resPost := model.PostResponse{
 		ID:         post.ID,
+		Title:      post.Title,
 		Text:       post.Text,
 		Image:      post.Image,
 		Prefecture: post.Prefecture,

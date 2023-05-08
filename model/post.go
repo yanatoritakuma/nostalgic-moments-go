@@ -4,6 +4,7 @@ import "time"
 
 type Post struct {
 	ID         uint      `json:"id" gorm:"primaryKey"`
+	Title      string    `json:"title" gorm:"not null"`
 	Text       string    `json:"text" gorm:"not null"`
 	Image      string    `json:"image"`
 	Prefecture string    `json:"prefecture" gorm:"not null"`
@@ -16,6 +17,7 @@ type Post struct {
 
 type PostResponse struct {
 	ID         uint             `json:"id" gorm:"primaryKey"`
+	Title      string           `json:"title" gorm:"not null"`
 	Text       string           `json:"text" gorm:"not null"`
 	Image      string           `json:"image"`
 	Prefecture string           `json:"prefecture" gorm:"not null"`
