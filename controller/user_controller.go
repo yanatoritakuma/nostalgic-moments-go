@@ -15,6 +15,7 @@ type IUserController interface {
 	LogIn(c echo.Context) error
 	LogOut(c echo.Context) error
 	CsrfToken(c echo.Context) error
+	GetLoggedInUser(c echo.Context) error
 }
 
 type userController struct {
@@ -52,7 +53,7 @@ func (uc *userController) LogIn(c echo.Context) error {
 	cookie.Expires = time.Now().Add(24 * time.Hour)
 	cookie.Path = "/"
 	cookie.Domain = os.Getenv("API_DOMAIN")
-	// cookie.Secure = true
+	cookie.Secure = true //PostMan使用する時コメントアウト
 	cookie.HttpOnly = true
 	cookie.SameSite = http.SameSiteNoneMode
 	c.SetCookie(cookie)
@@ -66,11 +67,27 @@ func (uc *userController) LogOut(c echo.Context) error {
 	cookie.Expires = time.Now()
 	cookie.Path = "/"
 	cookie.Domain = os.Getenv("API_DOMAIN")
-	// cookie.Secure = true
+	cookie.Secure = true //PostMan使用する時コメントアウト
 	cookie.HttpOnly = true
 	cookie.SameSite = http.SameSiteNoneMode
 	c.SetCookie(cookie)
 	return c.NoContent(http.StatusOK)
+}
+
+func (uc *userController) GetLoggedInUser(c echo.Context) error {
+	// Cookieからトークンを取得
+	cookie, err := c.Cookie("token")
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, "unauthorized")
+	}
+
+	// トークンを解析して、ユーザーを取得
+	userRes, err := uc.uu.GetLoggedInUser(cookie.Value)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, "unauthorized")
+	}
+
+	return c.JSON(http.StatusOK, userRes)
 }
 
 func (uc *userController) CsrfToken(c echo.Context) error {
