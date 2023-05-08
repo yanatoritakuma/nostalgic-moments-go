@@ -32,13 +32,14 @@ func NewRouter(uc controller.IUserController, pc controller.IPostController) *ec
 	e.POST("/logout", uc.LogOut)
 	e.GET("/csrf", uc.CsrfToken)
 
-	eu := e.Group("")
-	eu.Use(echojwt.WithConfig(echojwt.Config{
+	u := e.Group("/user")
+	u.Use(echojwt.WithConfig(echojwt.Config{
 		SigningKey:  []byte(os.Getenv("SECRET")),
 		TokenLookup: "cookie:token",
 	}))
 
-	eu.GET("/user", uc.GetLoggedInUser)
+	// JWTが必須なエンドポイント
+	u.GET("", uc.GetLoggedInUser)
 
 	p := e.Group("/posts")
 	// JWTが必須なエンドポイント
