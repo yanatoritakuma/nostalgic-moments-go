@@ -63,11 +63,17 @@ func (pc *postController) GetPrefecturePosts(c echo.Context) error {
 	prefecture := c.Param("prefecture")
 	page, _ := strconv.Atoi(c.QueryParam("page"))
 	pageSize, _ := strconv.Atoi(c.QueryParam("pageSize"))
-	postsRes, err := pc.pu.GetPrefecturePosts(prefecture, page, pageSize)
+	postsRes, totalCount, err := pc.pu.GetPrefecturePosts(prefecture, page, pageSize)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
-	return c.JSON(http.StatusOK, postsRes)
+
+	response := map[string]interface{}{
+		"totalCount": totalCount,
+		"posts":      postsRes,
+	}
+
+	return c.JSON(http.StatusOK, response)
 }
 
 func (pc *postController) CreatePost(c echo.Context) error {
