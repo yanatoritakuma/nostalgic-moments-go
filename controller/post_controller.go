@@ -50,12 +50,20 @@ func (pc *postController) GetMyPosts(c echo.Context) error {
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	userId := claims["user_id"]
+	page, _ := strconv.Atoi(c.QueryParam("page"))
+	pageSize, _ := strconv.Atoi(c.QueryParam("pageSize"))
 
-	postsRes, err := pc.pu.GetMyPosts(uint(userId.(float64)))
+	postsRes, totalCount, err := pc.pu.GetMyPosts(uint(userId.(float64)), page, pageSize)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
-	return c.JSON(http.StatusOK, postsRes)
+
+	response := map[string]interface{}{
+		"totalCount": totalCount,
+		"posts":      postsRes,
+	}
+
+	return c.JSON(http.StatusOK, response)
 
 }
 

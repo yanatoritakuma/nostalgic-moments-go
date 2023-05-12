@@ -9,7 +9,7 @@ import (
 type IPostUsecase interface {
 	GetAllPosts() ([]model.PostResponse, error)
 	GetPostById(postId uint) (model.PostResponse, error)
-	GetMyPosts(userId uint) ([]model.PostResponse, error)
+	GetMyPosts(userId uint, page int, pageSize int) ([]model.PostResponse, int, error)
 	GetPrefecturePosts(prefecture string, page int, pageSize int) ([]model.PostResponse, int, error)
 	CreatePost(post model.Post) (model.PostResponse, error)
 	UpdatePost(post model.Post, userId uint, postId uint) (model.PostResponse, error)
@@ -83,10 +83,11 @@ func (pu *postUsecase) GetPostById(postId uint) (model.PostResponse, error) {
 	return resPost, nil
 }
 
-func (pu *postUsecase) GetMyPosts(userId uint) ([]model.PostResponse, error) {
+func (pu *postUsecase) GetMyPosts(userId uint, page int, pageSize int) ([]model.PostResponse, int, error) {
 	posts := []model.Post{}
-	if err := pu.pr.GetMyPosts(&posts, userId); err != nil {
-		return nil, err
+	totalCount, err := pu.pr.GetMyPosts(&posts, userId, page, pageSize)
+	if err != nil {
+		return nil, 0, err
 	}
 	resPosts := []model.PostResponse{}
 	for _, v := range posts {
@@ -107,7 +108,7 @@ func (pu *postUsecase) GetMyPosts(userId uint) ([]model.PostResponse, error) {
 		}
 		resPosts = append(resPosts, p)
 	}
-	return resPosts, nil
+	return resPosts, totalCount, nil
 }
 
 func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize int) ([]model.PostResponse, int, error) {

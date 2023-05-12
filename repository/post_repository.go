@@ -11,7 +11,7 @@ import (
 type IPostRepository interface {
 	GetAllPosts(posts *[]model.Post) error
 	GetPostById(post *model.Post, postId uint) error
-	GetMyPosts(posts *[]model.Post, userId uint) error
+	GetMyPosts(posts *[]model.Post, userId uint, page int, pageSize int) (int, error)
 	GetPrefecturePosts(posts *[]model.Post, prefecture string, page int, pageSize int) (int, error)
 	GetUserById(id uint) (*model.User, error)
 	CreatePost(post *model.Post) error
@@ -41,11 +41,18 @@ func (pr *postRepository) GetPostById(post *model.Post, postId uint) error {
 	return nil
 }
 
-func (pr *postRepository) GetMyPosts(posts *[]model.Post, userId uint) error {
-	if err := pr.db.Joins("User").Where("user_id=?", userId).Order("created_at").Find(posts).Error; err != nil {
-		return err
+func (pr *postRepository) GetMyPosts(posts *[]model.Post, userId uint, page int, pageSize int) (int, error) {
+	offset := (page - 1) * pageSize
+	var totalCount int64
+
+	if err := pr.db.Model(&model.Post{}).Where("user_id=?", userId).Count(&totalCount).Error; err != nil {
+		return 0, err
 	}
-	return nil
+
+	if err := pr.db.Joins("User").Where("user_id=?", userId).Order("created_at").Offset(offset).Limit(pageSize).Find(posts).Error; err != nil {
+		return 0, err
+	}
+	return int(totalCount), nil
 }
 
 func (pr *postRepository) GetPrefecturePosts(posts *[]model.Post, prefecture string, page int, pageSize int) (int, error) {
