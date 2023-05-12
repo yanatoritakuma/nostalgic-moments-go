@@ -61,7 +61,9 @@ func (pc *postController) GetMyPosts(c echo.Context) error {
 
 func (pc *postController) GetPrefecturePosts(c echo.Context) error {
 	prefecture := c.Param("prefecture")
-	postsRes, err := pc.pu.GetPrefecturePosts(prefecture)
+	page, _ := strconv.Atoi(c.QueryParam("page"))
+	pageSize, _ := strconv.Atoi(c.QueryParam("pageSize"))
+	postsRes, err := pc.pu.GetPrefecturePosts(prefecture, page, pageSize)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}

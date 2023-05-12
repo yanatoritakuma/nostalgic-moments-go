@@ -10,7 +10,7 @@ type IPostUsecase interface {
 	GetAllPosts() ([]model.PostResponse, error)
 	GetPostById(postId uint) (model.PostResponse, error)
 	GetMyPosts(userId uint) ([]model.PostResponse, error)
-	GetPrefecturePosts(prefecture string) ([]model.PostResponse, error)
+	GetPrefecturePosts(prefecture string, page int, pageSize int) ([]model.PostResponse, error)
 	CreatePost(post model.Post) (model.PostResponse, error)
 	UpdatePost(post model.Post, userId uint, postId uint) (model.PostResponse, error)
 	DeletePost(userId uint, postId uint) error
@@ -110,9 +110,9 @@ func (pu *postUsecase) GetMyPosts(userId uint) ([]model.PostResponse, error) {
 	return resPosts, nil
 }
 
-func (pu *postUsecase) GetPrefecturePosts(prefecture string) ([]model.PostResponse, error) {
+func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize int) ([]model.PostResponse, error) {
 	posts := []model.Post{}
-	if err := pu.pr.GetPrefecturePosts(&posts, prefecture); err != nil {
+	if err := pu.pr.GetPrefecturePosts(&posts, prefecture, page, pageSize); err != nil {
 		return nil, err
 	}
 	resPosts := []model.PostResponse{}
