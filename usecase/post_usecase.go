@@ -9,8 +9,8 @@ import (
 type IPostUsecase interface {
 	GetAllPosts() ([]model.PostResponse, error)
 	GetPostById(postId uint) (model.PostResponse, error)
-	GetMyPosts(userId uint) ([]model.PostResponse, error)
-	GetPrefecturePosts(prefecture string) ([]model.PostResponse, error)
+	GetMyPosts(userId uint, page int, pageSize int) ([]model.PostResponse, int, error)
+	GetPrefecturePosts(prefecture string, page int, pageSize int) ([]model.PostResponse, int, error)
 	CreatePost(post model.Post) (model.PostResponse, error)
 	UpdatePost(post model.Post, userId uint, postId uint) (model.PostResponse, error)
 	DeletePost(userId uint, postId uint) error
@@ -38,6 +38,7 @@ func (pu *postUsecase) GetAllPosts() ([]model.PostResponse, error) {
 		}
 		p := model.PostResponse{
 			ID:         v.ID,
+			Title:      v.Title,
 			Text:       v.Text,
 			Image:      v.Image,
 			Prefecture: v.Prefecture,
@@ -66,6 +67,7 @@ func (pu *postUsecase) GetPostById(postId uint) (model.PostResponse, error) {
 	}
 	resPost := model.PostResponse{
 		ID:         post.ID,
+		Title:      post.Title,
 		Text:       post.Text,
 		Image:      post.Image,
 		Prefecture: post.Prefecture,
@@ -81,15 +83,17 @@ func (pu *postUsecase) GetPostById(postId uint) (model.PostResponse, error) {
 	return resPost, nil
 }
 
-func (pu *postUsecase) GetMyPosts(userId uint) ([]model.PostResponse, error) {
+func (pu *postUsecase) GetMyPosts(userId uint, page int, pageSize int) ([]model.PostResponse, int, error) {
 	posts := []model.Post{}
-	if err := pu.pr.GetMyPosts(&posts, userId); err != nil {
-		return nil, err
+	totalCount, err := pu.pr.GetMyPosts(&posts, userId, page, pageSize)
+	if err != nil {
+		return nil, 0, err
 	}
 	resPosts := []model.PostResponse{}
 	for _, v := range posts {
 		p := model.PostResponse{
 			ID:         v.ID,
+			Title:      v.Title,
 			Text:       v.Text,
 			Image:      v.Image,
 			Prefecture: v.Prefecture,
@@ -104,22 +108,25 @@ func (pu *postUsecase) GetMyPosts(userId uint) ([]model.PostResponse, error) {
 		}
 		resPosts = append(resPosts, p)
 	}
-	return resPosts, nil
+	return resPosts, totalCount, nil
 }
 
-func (pu *postUsecase) GetPrefecturePosts(prefecture string) ([]model.PostResponse, error) {
+func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize int) ([]model.PostResponse, int, error) {
 	posts := []model.Post{}
-	if err := pu.pr.GetPrefecturePosts(&posts, prefecture); err != nil {
-		return nil, err
+	totalCount, err := pu.pr.GetPrefecturePosts(&posts, prefecture, page, pageSize)
+	if err != nil {
+		return nil, 0, err
 	}
+
 	resPosts := []model.PostResponse{}
 	for _, v := range posts {
 		user, err := pu.pr.GetUserById(v.UserId)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		p := model.PostResponse{
 			ID:         v.ID,
+			Title:      v.Title,
 			Text:       v.Text,
 			Image:      v.Image,
 			Prefecture: v.Prefecture,
@@ -135,7 +142,7 @@ func (pu *postUsecase) GetPrefecturePosts(prefecture string) ([]model.PostRespon
 
 		resPosts = append(resPosts, p)
 	}
-	return resPosts, nil
+	return resPosts, totalCount, nil
 }
 
 func (pu *postUsecase) CreatePost(post model.Post) (model.PostResponse, error) {
@@ -147,6 +154,7 @@ func (pu *postUsecase) CreatePost(post model.Post) (model.PostResponse, error) {
 	}
 	resPost := model.PostResponse{
 		ID:         post.ID,
+		Title:      post.Title,
 		Text:       post.Text,
 		Image:      post.Image,
 		Prefecture: post.Prefecture,
@@ -171,6 +179,7 @@ func (pu *postUsecase) UpdatePost(post model.Post, userId uint, postId uint) (mo
 	}
 	resPost := model.PostResponse{
 		ID:         post.ID,
+		Title:      post.Title,
 		Text:       post.Text,
 		Image:      post.Image,
 		Prefecture: post.Prefecture,

@@ -46,7 +46,7 @@ func (uu *userUsecase) SignUp(user model.User) (model.UserResponse, error) {
 		Admin:     newUser.Admin,
 		CreatedAt: newUser.CreatedAt,
 	}
-	return resUser, err
+	return resUser, nil
 }
 
 func (uu *userUsecase) Login(user model.User) (string, error) {

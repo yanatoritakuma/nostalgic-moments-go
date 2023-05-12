@@ -19,6 +19,11 @@ func NewPostValidator() IPostValidator {
 func (pv *postValidator) PostValidator(post model.Post) error {
 	return validation.ValidateStruct(&post,
 		validation.Field(
+			&post.Title,
+			validation.Required.Error("text is required"),
+			validation.RuneLength(1, 50).Error("limites max 50 char"),
+		),
+		validation.Field(
 			&post.Text,
 			validation.Required.Error("text is required"),
 			validation.RuneLength(1, 150).Error("limites max 150 char"),
