@@ -25,6 +25,7 @@ type PostResponse struct {
 	CreatedAt  time.Time        `json:"created_at"`
 	User       PostUserResponse `json:"postUserResponse"`
 	UserId     uint             `json:"user_id" gorm:"not null"`
+	Likes      []LikeResponse   `json:"likes"`
 }
 
 type PostUserResponse struct {

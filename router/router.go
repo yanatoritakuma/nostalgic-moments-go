@@ -10,7 +10,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-func NewRouter(uc controller.IUserController, pc controller.IPostController) *echo.Echo {
+func NewRouter(uc controller.IUserController, pc controller.IPostController, lc controller.ILikeController) *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"http://localhost:3000", os.Getenv("FE_URL")},
@@ -55,5 +55,13 @@ func NewRouter(uc controller.IUserController, pc controller.IPostController) *ec
 	e.GET("/posts", pc.GetAllPosts)
 	e.GET("/posts/post_id/:postId", pc.GetPostById)
 	e.GET("/posts/prefecture/:prefecture", pc.GetPrefecturePosts)
+
+	l := e.Group("/likes")
+	// JWTが必須なエンドポイント
+	l.Use(echojwt.WithConfig(echojwt.Config{
+		SigningKey:  []byte(os.Getenv("SECRET")),
+		TokenLookup: "cookie:token",
+	}))
+	l.POST("", lc.CreateLike)
 	return e
 }

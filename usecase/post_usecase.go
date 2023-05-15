@@ -124,6 +124,21 @@ func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize 
 		if err != nil {
 			return nil, 0, err
 		}
+
+		likes := []model.Like{}
+		err = pu.pr.GetLikesByPostID(&likes, v.ID)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		likeResponses := []model.LikeResponse{}
+		for _, like := range likes {
+			likeResponse := model.LikeResponse{
+				UserId: like.UserId,
+			}
+			likeResponses = append(likeResponses, likeResponse)
+		}
+
 		p := model.PostResponse{
 			ID:         v.ID,
 			Title:      v.Title,
@@ -138,6 +153,7 @@ func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize 
 				Image: user.Image,
 			},
 			UserId: v.UserId,
+			Likes:  likeResponses,
 		}
 
 		resPosts = append(resPosts, p)
