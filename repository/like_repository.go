@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 	"nostalgic-moments-go/model"
 
 	"gorm.io/gorm"
@@ -9,6 +10,7 @@ import (
 
 type ILikeRepository interface {
 	CreateLike(like *model.Like) error
+	DeleteLike(userId uint, id uint) error
 	GetLikeByPostAndUser(postID uint, userID uint) (*model.Like, error)
 }
 
@@ -23,6 +25,17 @@ func NewLikeRepository(db *gorm.DB) ILikeRepository {
 func (lr *likeRepository) CreateLike(like *model.Like) error {
 	if err := lr.db.Create(like).Error; err != nil {
 		return err
+	}
+	return nil
+}
+
+func (lr *likeRepository) DeleteLike(userId uint, id uint) error {
+	result := lr.db.Where("user_id=? AND id=?", userId, id).Delete(&model.Like{})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected < 1 {
+		return fmt.Errorf("object does not exist")
 	}
 	return nil
 }

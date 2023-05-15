@@ -134,6 +134,7 @@ func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize 
 		likeResponses := []model.LikeResponse{}
 		for _, like := range likes {
 			likeResponse := model.LikeResponse{
+				ID:     like.ID,
 				UserId: like.UserId,
 			}
 			likeResponses = append(likeResponses, likeResponse)

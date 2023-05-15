@@ -13,5 +13,6 @@ type Like struct {
 }
 
 type LikeResponse struct {
+	ID     uint `json:"id"`
 	UserId uint `json:"user_id" gorm:"not null"`
 }
