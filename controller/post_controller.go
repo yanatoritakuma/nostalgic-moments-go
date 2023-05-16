@@ -53,14 +53,15 @@ func (pc *postController) GetMyPosts(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
 	pageSize, _ := strconv.Atoi(c.QueryParam("pageSize"))
 
-	postsRes, totalCount, err := pc.pu.GetMyPosts(uint(userId.(float64)), page, pageSize)
+	postsRes, totalPageCount, totalLikeCount, err := pc.pu.GetMyPosts(uint(userId.(float64)), page, pageSize)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	response := map[string]interface{}{
-		"totalCount": totalCount,
-		"posts":      postsRes,
+		"totalPageCount": totalPageCount,
+		"totalLikeCount": totalLikeCount,
+		"posts":          postsRes,
 	}
 
 	return c.JSON(http.StatusOK, response)

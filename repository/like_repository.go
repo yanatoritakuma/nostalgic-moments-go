@@ -12,6 +12,7 @@ type ILikeRepository interface {
 	CreateLike(like *model.Like) error
 	DeleteLike(userId uint, id uint) error
 	GetLikeByPostAndUser(postID uint, userID uint) (*model.Like, error)
+	GetMyLikeCount(userId uint) (int, error)
 }
 
 type likeRepository struct {
@@ -50,4 +51,14 @@ func (lr *likeRepository) GetLikeByPostAndUser(postID uint, userID uint) (*model
 		return nil, err
 	}
 	return like, nil
+}
+
+func (lr *likeRepository) GetMyLikeCount(userId uint) (int, error) {
+	var totalLikeCount int64
+
+	if err := lr.db.Model(&model.Like{}).Where("user_id=?", userId).Count(&totalLikeCount).Error; err != nil {
+		return 0, err
+	}
+
+	return int(totalLikeCount), nil
 }

@@ -17,7 +17,7 @@ func main() {
 	postRepositor := repository.NewPostRepository(db)
 	likeRepositor := repository.NewLikeRepository(db)
 	userUsecase := usecase.NweUserUsecase(userRepository, userValidator)
-	postUsecase := usecase.NewPostUsecase(postRepositor, postValidator)
+	postUsecase := usecase.NewPostUsecase(postRepositor, postValidator, likeRepositor)
 	likeUsecase := usecase.NewLikeUsecase(likeRepositor)
 	userController := controller.NewUserController(userUsecase)
 	postController := controller.NewPostController(postUsecase)
