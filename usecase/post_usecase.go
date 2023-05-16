@@ -131,19 +131,12 @@ func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize 
 			return nil, 0, err
 		}
 
-		likeResponses := []model.LikeResponse{}
-		likeFlag := false
+		likeCount := uint(len(likes))
+		likeId := uint(0)
 		for _, like := range likes {
-			likeResponse := model.LikeResponse{
-				ID:     like.ID,
-				UserId: like.UserId,
-			}
-
 			if like.UserId == userId {
-				likeFlag = true
+				likeId = uint(like.ID)
 			}
-
-			likeResponses = append(likeResponses, likeResponse)
 		}
 
 		p := model.PostResponse{
@@ -159,9 +152,9 @@ func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize 
 				Name:  user.Name,
 				Image: user.Image,
 			},
-			UserId:   v.UserId,
-			Likes:    likeResponses,
-			LikeFlag: likeFlag,
+			UserId:    v.UserId,
+			LikeCount: likeCount,
+			LikeId:    likeId,
 		}
 
 		resPosts = append(resPosts, p)
