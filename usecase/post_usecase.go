@@ -10,7 +10,7 @@ type IPostUsecase interface {
 	GetAllPosts() ([]model.PostResponse, error)
 	GetPostById(postId uint) (model.PostResponse, error)
 	GetMyPosts(userId uint, page int, pageSize int) ([]model.PostResponse, int, error)
-	GetPrefecturePosts(prefecture string, page int, pageSize int) ([]model.PostResponse, int, error)
+	GetPrefecturePosts(prefecture string, page int, pageSize int, userId uint) ([]model.PostResponse, int, error)
 	CreatePost(post model.Post) (model.PostResponse, error)
 	UpdatePost(post model.Post, userId uint, postId uint) (model.PostResponse, error)
 	DeletePost(userId uint, postId uint) error
@@ -111,7 +111,7 @@ func (pu *postUsecase) GetMyPosts(userId uint, page int, pageSize int) ([]model.
 	return resPosts, totalCount, nil
 }
 
-func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize int) ([]model.PostResponse, int, error) {
+func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize int, userId uint) ([]model.PostResponse, int, error) {
 	posts := []model.Post{}
 	totalCount, err := pu.pr.GetPrefecturePosts(&posts, prefecture, page, pageSize)
 	if err != nil {
@@ -132,11 +132,17 @@ func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize 
 		}
 
 		likeResponses := []model.LikeResponse{}
+		likeFlag := false
 		for _, like := range likes {
 			likeResponse := model.LikeResponse{
 				ID:     like.ID,
 				UserId: like.UserId,
 			}
+
+			if like.UserId == userId {
+				likeFlag = true
+			}
+
 			likeResponses = append(likeResponses, likeResponse)
 		}
 
@@ -153,8 +159,9 @@ func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize 
 				Name:  user.Name,
 				Image: user.Image,
 			},
-			UserId: v.UserId,
-			Likes:  likeResponses,
+			UserId:   v.UserId,
+			Likes:    likeResponses,
+			LikeFlag: likeFlag,
 		}
 
 		resPosts = append(resPosts, p)

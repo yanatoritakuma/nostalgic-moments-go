@@ -26,6 +26,7 @@ type PostResponse struct {
 	User       PostUserResponse `json:"postUserResponse"`
 	UserId     uint             `json:"user_id" gorm:"not null"`
 	Likes      []LikeResponse   `json:"likes"`
+	LikeFlag   bool             `json:"like_flag"`
 }
 
 type PostUserResponse struct {

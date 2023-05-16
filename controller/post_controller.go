@@ -71,7 +71,8 @@ func (pc *postController) GetPrefecturePosts(c echo.Context) error {
 	prefecture := c.Param("prefecture")
 	page, _ := strconv.Atoi(c.QueryParam("page"))
 	pageSize, _ := strconv.Atoi(c.QueryParam("pageSize"))
-	postsRes, totalCount, err := pc.pu.GetPrefecturePosts(prefecture, page, pageSize)
+	userId, _ := strconv.Atoi(c.QueryParam("userId"))
+	postsRes, totalCount, err := pc.pu.GetPrefecturePosts(prefecture, page, pageSize, uint(userId))
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
