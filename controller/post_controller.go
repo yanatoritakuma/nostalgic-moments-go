@@ -74,14 +74,14 @@ func (pc *postController) GetPrefecturePosts(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
 	pageSize, _ := strconv.Atoi(c.QueryParam("pageSize"))
 	userId, _ := strconv.Atoi(c.QueryParam("userId"))
-	postsRes, totalCount, err := pc.pu.GetPrefecturePosts(prefecture, page, pageSize, uint(userId))
+	postsRes, totalPageCount, err := pc.pu.GetPrefecturePosts(prefecture, page, pageSize, uint(userId))
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	response := map[string]interface{}{
-		"totalCount": totalCount,
-		"posts":      postsRes,
+		"totalPageCount": totalPageCount,
+		"posts":          postsRes,
 	}
 
 	return c.JSON(http.StatusOK, response)
