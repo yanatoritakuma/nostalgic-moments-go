@@ -9,8 +9,8 @@ import (
 type IPostUsecase interface {
 	GetAllPosts() ([]model.PostResponse, error)
 	GetPostById(postId uint) (model.PostResponse, error)
-	GetMyPosts(userId uint, page int, pageSize int) ([]model.PostResponse, int, error)
-	GetPrefecturePosts(prefecture string, page int, pageSize int) ([]model.PostResponse, int, error)
+	GetMyPosts(userId uint, page int, pageSize int) ([]model.PostResponse, []model.PostResponse, int, int, error)
+	GetPrefecturePosts(prefecture string, page int, pageSize int, userId uint) ([]model.PostResponse, int, error)
 	CreatePost(post model.Post) (model.PostResponse, error)
 	UpdatePost(post model.Post, userId uint, postId uint) (model.PostResponse, error)
 	DeletePost(userId uint, postId uint) error
@@ -19,10 +19,11 @@ type IPostUsecase interface {
 type postUsecase struct {
 	pr repository.IPostRepository
 	pv validator.IPostValidator
+	lr repository.ILikeRepository
 }
 
-func NewPostUsecase(pr repository.IPostRepository, pv validator.IPostValidator) IPostUsecase {
-	return &postUsecase{pr, pv}
+func NewPostUsecase(pr repository.IPostRepository, pv validator.IPostValidator, lr repository.ILikeRepository) IPostUsecase {
+	return &postUsecase{pr, pv, lr}
 }
 
 func (pu *postUsecase) GetAllPosts() ([]model.PostResponse, error) {
@@ -83,14 +84,34 @@ func (pu *postUsecase) GetPostById(postId uint) (model.PostResponse, error) {
 	return resPost, nil
 }
 
-func (pu *postUsecase) GetMyPosts(userId uint, page int, pageSize int) ([]model.PostResponse, int, error) {
+func (pu *postUsecase) GetMyPosts(userId uint, page int, pageSize int) ([]model.PostResponse, []model.PostResponse, int, int, error) {
 	posts := []model.Post{}
 	totalCount, err := pu.pr.GetMyPosts(&posts, userId, page, pageSize)
 	if err != nil {
-		return nil, 0, err
+		return nil, nil, 0, 0, err
 	}
+
+	totalLikeCount, err := pu.lr.GetMyLikeCount(userId)
+	if err != nil {
+		return nil, nil, 0, 0, err
+	}
+
 	resPosts := []model.PostResponse{}
 	for _, v := range posts {
+		likes := []model.Like{}
+		err = pu.pr.GetLikesByPostID(&likes, v.ID)
+		if err != nil {
+			return nil, nil, 0, 0, err
+		}
+
+		likeCount := uint(len(likes))
+		likeId := uint(0)
+		for _, like := range likes {
+			if like.UserId == userId {
+				likeId = uint(like.ID)
+			}
+		}
+
 		p := model.PostResponse{
 			ID:         v.ID,
 			Title:      v.Title,
@@ -104,14 +125,64 @@ func (pu *postUsecase) GetMyPosts(userId uint, page int, pageSize int) ([]model.
 				Name:  v.User.Name,
 				Image: v.User.Image,
 			},
-			UserId: v.UserId,
+			UserId:    v.UserId,
+			LikeCount: likeCount,
+			LikeId:    likeId,
 		}
 		resPosts = append(resPosts, p)
 	}
-	return resPosts, totalCount, nil
+
+	postIds, err := pu.lr.GetMyLikePostIdsByUserId(userId, page, pageSize)
+	resLikePosts := []model.PostResponse{}
+	for _, v := range postIds {
+		likes := []model.Like{}
+		err = pu.pr.GetLikesByPostID(&likes, v)
+		if err != nil {
+			return nil, nil, 0, 0, err
+		}
+
+		likeCount := uint(len(likes))
+		likeId := uint(0)
+		for _, like := range likes {
+			if like.UserId == userId {
+				likeId = uint(like.ID)
+			}
+		}
+
+		post := model.Post{}
+		if err := pu.pr.GetPostById(&post, v); err != nil {
+			return nil, nil, 0, 0, err
+		}
+
+		user, err := pu.pr.GetUserById(post.UserId)
+		if err != nil {
+			return nil, nil, 0, 0, err
+		}
+
+		p := model.PostResponse{
+			ID:         post.ID,
+			Title:      post.Title,
+			Text:       post.Text,
+			Image:      post.Image,
+			Prefecture: post.Prefecture,
+			Address:    post.Address,
+			CreatedAt:  post.CreatedAt,
+			User: model.PostUserResponse{
+				ID:    user.ID,
+				Name:  user.Name,
+				Image: user.Image,
+			},
+			UserId:    post.UserId,
+			LikeCount: likeCount,
+			LikeId:    likeId,
+		}
+		resLikePosts = append(resLikePosts, p)
+	}
+
+	return resPosts, resLikePosts, totalCount, totalLikeCount, nil
 }
 
-func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize int) ([]model.PostResponse, int, error) {
+func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize int, userId uint) ([]model.PostResponse, int, error) {
 	posts := []model.Post{}
 	totalCount, err := pu.pr.GetPrefecturePosts(&posts, prefecture, page, pageSize)
 	if err != nil {
@@ -124,6 +195,21 @@ func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize 
 		if err != nil {
 			return nil, 0, err
 		}
+
+		likes := []model.Like{}
+		err = pu.pr.GetLikesByPostID(&likes, v.ID)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		likeCount := uint(len(likes))
+		likeId := uint(0)
+		for _, like := range likes {
+			if like.UserId == userId {
+				likeId = uint(like.ID)
+			}
+		}
+
 		p := model.PostResponse{
 			ID:         v.ID,
 			Title:      v.Title,
@@ -137,7 +223,9 @@ func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize 
 				Name:  user.Name,
 				Image: user.Image,
 			},
-			UserId: v.UserId,
+			UserId:    v.UserId,
+			LikeCount: likeCount,
+			LikeId:    likeId,
 		}
 
 		resPosts = append(resPosts, p)

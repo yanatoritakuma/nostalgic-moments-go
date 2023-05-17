@@ -53,14 +53,16 @@ func (pc *postController) GetMyPosts(c echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
 	pageSize, _ := strconv.Atoi(c.QueryParam("pageSize"))
 
-	postsRes, totalCount, err := pc.pu.GetMyPosts(uint(userId.(float64)), page, pageSize)
+	postsRes, likePostsRes, totalPageCount, totalLikeCount, err := pc.pu.GetMyPosts(uint(userId.(float64)), page, pageSize)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	response := map[string]interface{}{
-		"totalCount": totalCount,
-		"posts":      postsRes,
+		"totalPageCount": totalPageCount,
+		"totalLikeCount": totalLikeCount,
+		"posts":          postsRes,
+		"likePosts":      likePostsRes,
 	}
 
 	return c.JSON(http.StatusOK, response)
@@ -71,7 +73,8 @@ func (pc *postController) GetPrefecturePosts(c echo.Context) error {
 	prefecture := c.Param("prefecture")
 	page, _ := strconv.Atoi(c.QueryParam("page"))
 	pageSize, _ := strconv.Atoi(c.QueryParam("pageSize"))
-	postsRes, totalCount, err := pc.pu.GetPrefecturePosts(prefecture, page, pageSize)
+	userId, _ := strconv.Atoi(c.QueryParam("userId"))
+	postsRes, totalCount, err := pc.pu.GetPrefecturePosts(prefecture, page, pageSize, uint(userId))
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}

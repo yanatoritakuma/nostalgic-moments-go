@@ -13,9 +13,6 @@ type Like struct {
 }
 
 type LikeResponse struct {
-	CreatedAt time.Time `json:"created_at"`
-	Post      Post      `json:"post" gorm:"foreignKey:PostId; constraint:OnDelete:CASCADE"`
-	PostId    uint      `json:"post_id" gorm:"not null"`
-	User      User      `json:"user" gorm:"foreignKey:UserId; constraint:OnDelete:CASCADE"`
-	UserId    uint      `json:"user_id" gorm:"not null"`
+	ID     uint `json:"id"`
+	UserId uint `json:"user_id" gorm:"not null"`
 }
