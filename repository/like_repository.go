@@ -11,8 +11,9 @@ import (
 type ILikeRepository interface {
 	CreateLike(like *model.Like) error
 	DeleteLike(userId uint, id uint) error
-	GetLikeByPostAndUser(postID uint, userID uint) (*model.Like, error)
+	GetLikeByPostAndUser(postId uint, userId uint) (*model.Like, error)
 	GetMyLikeCount(userId uint) (int, error)
+	GetMyLikePostIdsByUserId(userId uint, page int, pageSize int) ([]uint, error)
 }
 
 type likeRepository struct {
@@ -41,9 +42,9 @@ func (lr *likeRepository) DeleteLike(userId uint, id uint) error {
 	return nil
 }
 
-func (lr *likeRepository) GetLikeByPostAndUser(postID uint, userID uint) (*model.Like, error) {
+func (lr *likeRepository) GetLikeByPostAndUser(postId uint, userId uint) (*model.Like, error) {
 	like := &model.Like{}
-	if err := lr.db.Where("post_id=? AND user_id=?", postID, userID).First(like).Error; err != nil {
+	if err := lr.db.Where("post_id=? AND user_id=?", postId, userId).First(like).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// likeが見つからなかった場合はnilを返す
 			return nil, nil
@@ -61,4 +62,20 @@ func (lr *likeRepository) GetMyLikeCount(userId uint) (int, error) {
 	}
 
 	return int(totalLikeCount), nil
+}
+
+func (lr *likeRepository) GetMyLikePostIdsByUserId(userId uint, page int, pageSize int) ([]uint, error) {
+	likes := []model.Like{}
+	offset := (page - 1) * pageSize
+	if err := lr.db.Where("user_id = ?", userId).Order("created_at").Offset(offset).Limit(pageSize).Find(&likes).Error; err != nil {
+		return nil, err
+	}
+
+	// 絞り込まれたLikeのPostIdを取得
+	postIds := []uint{}
+	for _, like := range likes {
+		postIds = append(postIds, like.PostId)
+	}
+
+	return postIds, nil
 }
