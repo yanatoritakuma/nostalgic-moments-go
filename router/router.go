@@ -51,6 +51,7 @@ func NewRouter(uc controller.IUserController, pc controller.IPostController, lc 
 	p.POST("", pc.CreatePost)
 	p.PUT("/:postId", pc.UpdatePost)
 	p.DELETE("/:postId", pc.DeletePost)
+
 	// JWTが必須でないエンドポイント
 	e.GET("/posts", pc.GetAllPosts)
 	e.GET("/posts/postId/:postId", pc.GetPostById)
