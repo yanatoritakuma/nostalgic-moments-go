@@ -41,6 +41,7 @@ func NewRouter(uc controller.IUserController, pc controller.IPostController, lc 
 	// JWTが必須なエンドポイント
 	u.GET("", uc.GetLoggedInUser)
 	u.PUT("", uc.UpdateUser)
+	u.DELETE("/:userId", uc.DeleteUser)
 
 	p := e.Group("/posts")
 	// JWTが必須なエンドポイント

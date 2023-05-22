@@ -17,6 +17,7 @@ type IUserUsecase interface {
 	Login(user model.User) (string, error)
 	GetLoggedInUser(tokenString string) (*model.UserResponse, error)
 	UpdateUser(user model.User, id uint) (model.UserResponse, error)
+	DeleteUser(id uint) error
 }
 
 type userUsecase struct {
@@ -120,4 +121,11 @@ func (uu *userUsecase) UpdateUser(user model.User, id uint) (model.UserResponse,
 		CreatedAt: user.CreatedAt,
 	}
 	return resUser, nil
+}
+
+func (uu *userUsecase) DeleteUser(id uint) error {
+	if err := uu.ur.DeleteUser(id); err != nil {
+		return err
+	}
+	return nil
 }

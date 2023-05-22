@@ -18,6 +18,7 @@ type IUserController interface {
 	CsrfToken(c echo.Context) error
 	GetLoggedInUser(c echo.Context) error
 	UpdateUser(c echo.Context) error
+	DeleteUser(c echo.Context) error
 }
 
 type userController struct {
@@ -113,4 +114,16 @@ func (uc *userController) UpdateUser(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusCreated, userRes)
+}
+
+func (uc *userController) DeleteUser(c echo.Context) error {
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	userId := claims["user_id"]
+
+	err := uc.uu.DeleteUser(uint(userId.(float64)))
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	return c.NoContent(http.StatusNoContent)
 }

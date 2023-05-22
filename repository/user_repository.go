@@ -13,6 +13,7 @@ type IUserRepository interface {
 	CreateUser(user *model.User) error
 	GetUserByID(user *model.User, id uint) error
 	UpdateUser(user *model.User, id uint) error
+	DeleteUser(id uint) error
 }
 
 type userRepository struct {
@@ -50,6 +51,17 @@ func (ur *userRepository) UpdateUser(user *model.User, id uint) error {
 		"name":  user.Name,
 		"image": user.Image,
 	})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected < 1 {
+		return fmt.Errorf("object does not exist")
+	}
+	return nil
+}
+
+func (ur *userRepository) DeleteUser(id uint) error {
+	result := ur.db.Where("id=?", id).Delete(&model.User{})
 	if result.Error != nil {
 		return result.Error
 	}
