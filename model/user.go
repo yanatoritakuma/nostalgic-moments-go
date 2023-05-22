@@ -15,6 +15,7 @@ type User struct {
 
 type UserResponse struct {
 	ID        uint      `json:"id"`
+	Email     string    `json:"email"`
 	Name      string    `json:"name"`
 	Image     string    `json:"image"`
 	Admin     bool      `json:"admin"`

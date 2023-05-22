@@ -16,6 +16,8 @@ type IUserUsecase interface {
 	SignUp(user model.User) (model.UserResponse, error)
 	Login(user model.User) (string, error)
 	GetLoggedInUser(tokenString string) (*model.UserResponse, error)
+	UpdateUser(user model.User, id uint) (model.UserResponse, error)
+	DeleteUser(id uint) error
 }
 
 type userUsecase struct {
@@ -41,6 +43,7 @@ func (uu *userUsecase) SignUp(user model.User) (model.UserResponse, error) {
 	}
 	resUser := model.UserResponse{
 		ID:        newUser.ID,
+		Email:     newUser.Email,
 		Name:      newUser.Name,
 		Image:     newUser.Image,
 		Admin:     newUser.Admin,
@@ -91,6 +94,7 @@ func (uu *userUsecase) GetLoggedInUser(tokenString string) (*model.UserResponse,
 		}
 		return &model.UserResponse{
 			ID:        user.ID,
+			Email:     user.Email,
 			Name:      user.Name,
 			Image:     user.Image,
 			Admin:     user.Admin,
@@ -99,4 +103,29 @@ func (uu *userUsecase) GetLoggedInUser(tokenString string) (*model.UserResponse,
 	} else {
 		return nil, fmt.Errorf("invalid JWT token")
 	}
+}
+
+func (uu *userUsecase) UpdateUser(user model.User, id uint) (model.UserResponse, error) {
+	if err := uu.uv.UpdateUserValidate(user); err != nil {
+		return model.UserResponse{}, err
+	}
+	if err := uu.ur.UpdateUser(&user, id); err != nil {
+		return model.UserResponse{}, err
+	}
+	resUser := model.UserResponse{
+		ID:        user.ID,
+		Email:     user.Email,
+		Name:      user.Name,
+		Image:     user.Image,
+		Admin:     user.Admin,
+		CreatedAt: user.CreatedAt,
+	}
+	return resUser, nil
+}
+
+func (uu *userUsecase) DeleteUser(id uint) error {
+	if err := uu.ur.DeleteUser(id); err != nil {
+		return err
+	}
+	return nil
 }
