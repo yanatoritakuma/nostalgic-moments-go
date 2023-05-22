@@ -1,15 +1,18 @@
 package repository
 
 import (
+	"fmt"
 	"nostalgic-moments-go/model"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type IUserRepository interface {
 	GetUserByEmail(user *model.User, email string) error
 	CreateUser(user *model.User) error
-	GetUserByID(user *model.User, userID uint) error
+	GetUserByID(user *model.User, id uint) error
+	UpdateUser(user *model.User, id uint) error
 }
 
 type userRepository struct {
@@ -34,9 +37,24 @@ func (ur *userRepository) CreateUser(user *model.User) error {
 	return nil
 }
 
-func (ur *userRepository) GetUserByID(user *model.User, userID uint) error {
-	if err := ur.db.Where("id=?", userID).First(user).Error; err != nil {
+func (ur *userRepository) GetUserByID(user *model.User, id uint) error {
+	if err := ur.db.Where("id=?", id).First(user).Error; err != nil {
 		return err
+	}
+	return nil
+}
+
+func (ur *userRepository) UpdateUser(user *model.User, id uint) error {
+	result := ur.db.Model(user).Clauses(clause.Returning{}).Where("id=?", id).Updates(map[string]interface{}{
+		"email": user.Email,
+		"name":  user.Name,
+		"image": user.Image,
+	})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected < 1 {
+		return fmt.Errorf("object does not exist")
 	}
 	return nil
 }

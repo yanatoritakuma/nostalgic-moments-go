@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
 )
 
@@ -16,6 +17,7 @@ type IUserController interface {
 	LogOut(c echo.Context) error
 	CsrfToken(c echo.Context) error
 	GetLoggedInUser(c echo.Context) error
+	UpdateUser(c echo.Context) error
 }
 
 type userController struct {
@@ -95,4 +97,20 @@ func (uc *userController) CsrfToken(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{
 		"csrf_token": token,
 	})
+}
+
+func (uc *userController) UpdateUser(c echo.Context) error {
+	jwtUser := c.Get("user").(*jwt.Token)
+	claims := jwtUser.Claims.(jwt.MapClaims)
+	userId := claims["user_id"]
+
+	user := model.User{}
+	if err := c.Bind(&user); err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+	userRes, err := uc.uu.UpdateUser(user, uint(userId.(float64)))
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	return c.JSON(http.StatusCreated, userRes)
 }
