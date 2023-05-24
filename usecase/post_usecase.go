@@ -20,10 +20,11 @@ type postUsecase struct {
 	pr repository.IPostRepository
 	pv validator.IPostValidator
 	lr repository.ILikeRepository
+	tr repository.ITagRepository
 }
 
-func NewPostUsecase(pr repository.IPostRepository, pv validator.IPostValidator, lr repository.ILikeRepository) IPostUsecase {
-	return &postUsecase{pr, pv, lr}
+func NewPostUsecase(pr repository.IPostRepository, pv validator.IPostValidator, lr repository.ILikeRepository, tr repository.ITagRepository) IPostUsecase {
+	return &postUsecase{pr, pv, lr, tr}
 }
 
 func (pu *postUsecase) GetAllPosts() ([]model.PostResponse, error) {
@@ -184,6 +185,7 @@ func (pu *postUsecase) GetMyPosts(userId uint, page int, pageSize int) ([]model.
 
 func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize int, userId uint) ([]model.PostResponse, int, error) {
 	posts := []model.Post{}
+	tags := []model.Tag{}
 	totalCount, err := pu.pr.GetPrefecturePosts(&posts, prefecture, page, pageSize)
 	if err != nil {
 		return nil, 0, err
@@ -210,6 +212,20 @@ func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize 
 			}
 		}
 
+		err = pu.tr.GetTagsByPostId(&tags, v.ID)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		resTags := []model.TagResponse{}
+		for _, tag := range tags {
+			t := model.TagResponse{
+				ID:   tag.ID,
+				Name: tag.Name,
+			}
+			resTags = append(resTags, t)
+		}
+
 		p := model.PostResponse{
 			ID:         v.ID,
 			Title:      v.Title,
@@ -226,6 +242,7 @@ func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize 
 			UserId:    v.UserId,
 			LikeCount: likeCount,
 			LikeId:    likeId,
+			Tags:      resTags,
 		}
 
 		resPosts = append(resPosts, p)
