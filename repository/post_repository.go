@@ -92,8 +92,8 @@ func (pr *postRepository) UpdatePost(post *model.Post, userId uint, postId uint)
 		"title":      post.Title,
 		"text":       post.Text,
 		"image":      post.Image,
-		"Prefecture": post.Prefecture,
-		"Address":    post.Address,
+		"prefecture": post.Prefecture,
+		"address":    post.Address,
 	})
 	if result.Error != nil {
 		return result.Error
