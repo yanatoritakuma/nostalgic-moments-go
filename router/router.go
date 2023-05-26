@@ -75,6 +75,7 @@ func NewRouter(uc controller.IUserController, pc controller.IPostController, lc 
 		TokenLookup: "cookie:token",
 	}))
 	t.POST("", tc.CreateTags)
+	t.DELETE("", tc.DeleteTags)
 
 	return e
 }

@@ -7,6 +7,7 @@ import (
 
 type ITagUsecase interface {
 	CreateTags(tags []model.Tag) ([]model.TagResponse, error)
+	DeleteTags(userId uint, tagIds []uint) error
 }
 
 type tagUsecase struct {
@@ -30,4 +31,13 @@ func (tu *tagUsecase) CreateTags(tags []model.Tag) ([]model.TagResponse, error) 
 		resTags = append(resTags, t)
 	}
 	return resTags, nil
+}
+
+func (tu *tagUsecase) DeleteTags(userId uint, tagIds []uint) error {
+	for _, v := range tagIds {
+		if err := tu.tr.DeleteTags(userId, v); err != nil {
+			return err
+		}
+	}
+	return nil
 }
