@@ -58,6 +58,7 @@ func NewRouter(uc controller.IUserController, pc controller.IPostController, lc 
 	e.GET("/posts", pc.GetAllPosts)
 	e.GET("/posts/postId/:postId", pc.GetPostById)
 	e.GET("/posts/prefecture/:prefecture", pc.GetPrefecturePosts)
+	e.GET("/posts/tagName/:tagName", pc.GetPostsByTagName)
 
 	l := e.Group("/likes")
 	// JWTが必須なエンドポイント
