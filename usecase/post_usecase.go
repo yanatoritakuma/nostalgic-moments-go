@@ -289,72 +289,70 @@ func (pu *postUsecase) GetPostsByTagName(tagName string, page int, pageSize int,
 	if err != nil {
 		return nil, 0, err
 	}
-	resPosts := []model.PostResponse{}
-	visitedIDs := make(map[uint]bool)
+
+	postIds := []uint{}
 	for _, v := range tags {
-		err = pu.pr.GetPostByIds(&posts, v.PostId)
+		postIds = append(postIds, v.PostId)
+	}
+
+	err = pu.pr.GetPostsByIds(&posts, postIds)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	resPosts := []model.PostResponse{}
+	for _, v := range posts {
+		user, err := pu.pr.GetUserById(v.UserId)
 		if err != nil {
 			return nil, 0, err
 		}
-		for _, v := range posts {
-			// 重複する post.ID をチェックしてスキップする
-			if _, visited := visitedIDs[v.ID]; visited {
-				continue
-			}
-			visitedIDs[v.ID] = true
 
-			user, err := pu.pr.GetUserById(v.UserId)
-			if err != nil {
-				return nil, 0, err
-			}
-
-			likes := []model.Like{}
-			err = pu.pr.GetLikesByPostID(&likes, v.ID)
-			if err != nil {
-				return nil, 0, err
-			}
-
-			likeCount := uint(len(likes))
-			likeId := uint(0)
-			for _, like := range likes {
-				if like.UserId == userId {
-					likeId = uint(like.ID)
-				}
-			}
-
-			err = pu.tr.GetTagsByPostId(&tags, v.ID)
-			if err != nil {
-				return nil, 0, err
-			}
-
-			resTags := []model.TagResponse{}
-			for _, tag := range tags {
-				t := model.TagResponse{
-					ID:   tag.ID,
-					Name: tag.Name,
-				}
-				resTags = append(resTags, t)
-			}
-			p := model.PostResponse{
-				ID:         v.ID,
-				Title:      v.Title,
-				Text:       v.Text,
-				Image:      v.Image,
-				Prefecture: v.Prefecture,
-				Address:    v.Address,
-				CreatedAt:  v.CreatedAt,
-				User: model.PostUserResponse{
-					ID:    user.ID,
-					Name:  user.Name,
-					Image: user.Image,
-				},
-				UserId:    v.UserId,
-				LikeCount: likeCount,
-				LikeId:    likeId,
-				Tags:      resTags,
-			}
-			resPosts = append(resPosts, p)
+		likes := []model.Like{}
+		err = pu.pr.GetLikesByPostID(&likes, v.ID)
+		if err != nil {
+			return nil, 0, err
 		}
+
+		likeCount := uint(len(likes))
+		likeId := uint(0)
+		for _, like := range likes {
+			if like.UserId == userId {
+				likeId = uint(like.ID)
+			}
+		}
+
+		err = pu.tr.GetTagsByPostId(&tags, v.ID)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		resTags := []model.TagResponse{}
+		for _, tag := range tags {
+			t := model.TagResponse{
+				ID:   tag.ID,
+				Name: tag.Name,
+			}
+			resTags = append(resTags, t)
+		}
+		p := model.PostResponse{
+			ID:         v.ID,
+			Title:      v.Title,
+			Text:       v.Text,
+			Image:      v.Image,
+			Prefecture: v.Prefecture,
+			Address:    v.Address,
+			CreatedAt:  v.CreatedAt,
+			User: model.PostUserResponse{
+				ID:    user.ID,
+				Name:  user.Name,
+				Image: user.Image,
+			},
+			UserId:    v.UserId,
+			LikeCount: likeCount,
+			LikeId:    likeId,
+			Tags:      resTags,
+		}
+		resPosts = append(resPosts, p)
 	}
 	return resPosts, totalCount, nil
 }

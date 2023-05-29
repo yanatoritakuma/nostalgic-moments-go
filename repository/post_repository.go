@@ -11,7 +11,7 @@ import (
 type IPostRepository interface {
 	GetAllPosts(posts *[]model.Post) error
 	GetPostById(post *model.Post, postId uint) error
-	GetPostByIds(posts *[]model.Post, postId uint) error
+	GetPostsByIds(posts *[]model.Post, postIds []uint) error
 	GetMyPosts(posts *[]model.Post, userId uint, page int, pageSize int) (int, error)
 	GetPrefecturePosts(posts *[]model.Post, prefecture string, page int, pageSize int) (int, error)
 	GetUserById(id uint) (*model.User, error)
@@ -43,8 +43,8 @@ func (pr *postRepository) GetPostById(post *model.Post, postId uint) error {
 	return nil
 }
 
-func (pr *postRepository) GetPostByIds(posts *[]model.Post, postId uint) error {
-	if err := pr.db.Where("id=?", postId).Order("created_at").Find(posts).Error; err != nil {
+func (pr *postRepository) GetPostsByIds(posts *[]model.Post, postIds []uint) error {
+	if err := pr.db.Where("id IN (?)", postIds).Order("created_at").Find(posts).Error; err != nil {
 		return err
 	}
 	return nil
