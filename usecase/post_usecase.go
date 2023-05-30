@@ -24,7 +24,12 @@ type postUsecase struct {
 	tr repository.ITagRepository
 }
 
-func NewPostUsecase(pr repository.IPostRepository, pv validator.IPostValidator, lr repository.ILikeRepository, tr repository.ITagRepository) IPostUsecase {
+func NewPostUsecase(
+	pr repository.IPostRepository,
+	pv validator.IPostValidator,
+	lr repository.ILikeRepository,
+	tr repository.ITagRepository,
+) IPostUsecase {
 	return &postUsecase{pr, pv, lr, tr}
 }
 

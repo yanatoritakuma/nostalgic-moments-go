@@ -10,7 +10,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-func NewRouter(uc controller.IUserController, pc controller.IPostController, lc controller.ILikeController, tc controller.ITagController) *echo.Echo {
+func NewRouter(uc controller.IUserController, pc controller.IPostController, lc controller.ILikeController, tc controller.ITagController, pcc controller.IPostCommentController) *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"http://localhost:3000", os.Getenv("FE_URL")},
@@ -77,6 +77,17 @@ func NewRouter(uc controller.IUserController, pc controller.IPostController, lc 
 	}))
 	t.POST("", tc.CreateTags)
 	t.DELETE("", tc.DeleteTags)
+
+	c := e.Group("/postComment")
+	// JWTが必須なエンドポイント
+	c.Use(echojwt.WithConfig(echojwt.Config{
+		SigningKey:  []byte(os.Getenv("SECRET")),
+		TokenLookup: "cookie:token",
+	}))
+	c.POST("", pcc.CreatePostComment)
+	c.DELETE("/:commentId", pcc.DeletePostComment)
+	// JWTが必須でないエンドポイント
+	e.GET("/postComment/:postId", pcc.GetPostCommentsByPostId)
 
 	return e
 }
