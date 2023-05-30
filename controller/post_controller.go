@@ -15,6 +15,7 @@ type IPostController interface {
 	GetPostById(c echo.Context) error
 	GetMyPosts(c echo.Context) error
 	GetPrefecturePosts(c echo.Context) error
+	GetPostsByTagName(c echo.Context) error
 	CreatePost(c echo.Context) error
 	UpdatePost(c echo.Context) error
 	DeletePost(c echo.Context) error
@@ -75,6 +76,24 @@ func (pc *postController) GetPrefecturePosts(c echo.Context) error {
 	pageSize, _ := strconv.Atoi(c.QueryParam("pageSize"))
 	userId, _ := strconv.Atoi(c.QueryParam("userId"))
 	postsRes, totalPageCount, err := pc.pu.GetPrefecturePosts(prefecture, page, pageSize, uint(userId))
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	response := map[string]interface{}{
+		"totalPageCount": totalPageCount,
+		"posts":          postsRes,
+	}
+
+	return c.JSON(http.StatusOK, response)
+}
+
+func (pc *postController) GetPostsByTagName(c echo.Context) error {
+	tagName := c.Param("tagName")
+	page, _ := strconv.Atoi(c.QueryParam("page"))
+	pageSize, _ := strconv.Atoi(c.QueryParam("pageSize"))
+	userId, _ := strconv.Atoi(c.QueryParam("userId"))
+	postsRes, totalPageCount, err := pc.pu.GetPostsByTagName(tagName, page, pageSize, uint(userId))
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}

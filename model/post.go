@@ -27,6 +27,7 @@ type PostResponse struct {
 	UserId     uint             `json:"user_id" gorm:"not null"`
 	LikeCount  uint             `json:"like_count"`
 	LikeId     uint             `json:"like_id"`
+	Tags       []TagResponse    `json:"tagResponse"`
 }
 
 type PostUserResponse struct {

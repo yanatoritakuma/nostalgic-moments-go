@@ -11,6 +11,7 @@ type IPostUsecase interface {
 	GetPostById(postId uint) (model.PostResponse, error)
 	GetMyPosts(userId uint, page int, pageSize int) ([]model.PostResponse, []model.PostResponse, int, int, error)
 	GetPrefecturePosts(prefecture string, page int, pageSize int, userId uint) ([]model.PostResponse, int, error)
+	GetPostsByTagName(tagName string, page int, pageSize int, userId uint) ([]model.PostResponse, int, error)
 	CreatePost(post model.Post) (model.PostResponse, error)
 	UpdatePost(post model.Post, userId uint, postId uint) (model.PostResponse, error)
 	DeletePost(userId uint, postId uint) error
@@ -20,10 +21,11 @@ type postUsecase struct {
 	pr repository.IPostRepository
 	pv validator.IPostValidator
 	lr repository.ILikeRepository
+	tr repository.ITagRepository
 }
 
-func NewPostUsecase(pr repository.IPostRepository, pv validator.IPostValidator, lr repository.ILikeRepository) IPostUsecase {
-	return &postUsecase{pr, pv, lr}
+func NewPostUsecase(pr repository.IPostRepository, pv validator.IPostValidator, lr repository.ILikeRepository, tr repository.ITagRepository) IPostUsecase {
+	return &postUsecase{pr, pv, lr, tr}
 }
 
 func (pu *postUsecase) GetAllPosts() ([]model.PostResponse, error) {
@@ -86,6 +88,7 @@ func (pu *postUsecase) GetPostById(postId uint) (model.PostResponse, error) {
 
 func (pu *postUsecase) GetMyPosts(userId uint, page int, pageSize int) ([]model.PostResponse, []model.PostResponse, int, int, error) {
 	posts := []model.Post{}
+	tags := []model.Tag{}
 	totalCount, err := pu.pr.GetMyPosts(&posts, userId, page, pageSize)
 	if err != nil {
 		return nil, nil, 0, 0, err
@@ -112,6 +115,20 @@ func (pu *postUsecase) GetMyPosts(userId uint, page int, pageSize int) ([]model.
 			}
 		}
 
+		err = pu.tr.GetTagsByPostId(&tags, v.ID)
+		if err != nil {
+			return nil, nil, 0, 0, err
+		}
+
+		resTags := []model.TagResponse{}
+		for _, tag := range tags {
+			t := model.TagResponse{
+				ID:   tag.ID,
+				Name: tag.Name,
+			}
+			resTags = append(resTags, t)
+		}
+
 		p := model.PostResponse{
 			ID:         v.ID,
 			Title:      v.Title,
@@ -128,6 +145,7 @@ func (pu *postUsecase) GetMyPosts(userId uint, page int, pageSize int) ([]model.
 			UserId:    v.UserId,
 			LikeCount: likeCount,
 			LikeId:    likeId,
+			Tags:      resTags,
 		}
 		resPosts = append(resPosts, p)
 	}
@@ -159,6 +177,20 @@ func (pu *postUsecase) GetMyPosts(userId uint, page int, pageSize int) ([]model.
 			return nil, nil, 0, 0, err
 		}
 
+		err = pu.tr.GetTagsByPostId(&tags, v)
+		if err != nil {
+			return nil, nil, 0, 0, err
+		}
+
+		resTags := []model.TagResponse{}
+		for _, tag := range tags {
+			t := model.TagResponse{
+				ID:   tag.ID,
+				Name: tag.Name,
+			}
+			resTags = append(resTags, t)
+		}
+
 		p := model.PostResponse{
 			ID:         post.ID,
 			Title:      post.Title,
@@ -175,6 +207,7 @@ func (pu *postUsecase) GetMyPosts(userId uint, page int, pageSize int) ([]model.
 			UserId:    post.UserId,
 			LikeCount: likeCount,
 			LikeId:    likeId,
+			Tags:      resTags,
 		}
 		resLikePosts = append(resLikePosts, p)
 	}
@@ -184,6 +217,7 @@ func (pu *postUsecase) GetMyPosts(userId uint, page int, pageSize int) ([]model.
 
 func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize int, userId uint) ([]model.PostResponse, int, error) {
 	posts := []model.Post{}
+	tags := []model.Tag{}
 	totalCount, err := pu.pr.GetPrefecturePosts(&posts, prefecture, page, pageSize)
 	if err != nil {
 		return nil, 0, err
@@ -210,6 +244,20 @@ func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize 
 			}
 		}
 
+		err = pu.tr.GetTagsByPostId(&tags, v.ID)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		resTags := []model.TagResponse{}
+		for _, tag := range tags {
+			t := model.TagResponse{
+				ID:   tag.ID,
+				Name: tag.Name,
+			}
+			resTags = append(resTags, t)
+		}
+
 		p := model.PostResponse{
 			ID:         v.ID,
 			Title:      v.Title,
@@ -226,8 +274,84 @@ func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize 
 			UserId:    v.UserId,
 			LikeCount: likeCount,
 			LikeId:    likeId,
+			Tags:      resTags,
 		}
 
+		resPosts = append(resPosts, p)
+	}
+	return resPosts, totalCount, nil
+}
+
+func (pu *postUsecase) GetPostsByTagName(tagName string, page int, pageSize int, userId uint) ([]model.PostResponse, int, error) {
+	posts := []model.Post{}
+	tags := []model.Tag{}
+	totalCount, err := pu.tr.GetTagsByTagName(&tags, tagName, page, pageSize)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	postIds := []uint{}
+	for _, v := range tags {
+		postIds = append(postIds, v.PostId)
+	}
+
+	err = pu.pr.GetPostsByIds(&posts, postIds)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	resPosts := []model.PostResponse{}
+	for _, v := range posts {
+		user, err := pu.pr.GetUserById(v.UserId)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		likes := []model.Like{}
+		err = pu.pr.GetLikesByPostID(&likes, v.ID)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		likeCount := uint(len(likes))
+		likeId := uint(0)
+		for _, like := range likes {
+			if like.UserId == userId {
+				likeId = uint(like.ID)
+			}
+		}
+
+		err = pu.tr.GetTagsByPostId(&tags, v.ID)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		resTags := []model.TagResponse{}
+		for _, tag := range tags {
+			t := model.TagResponse{
+				ID:   tag.ID,
+				Name: tag.Name,
+			}
+			resTags = append(resTags, t)
+		}
+		p := model.PostResponse{
+			ID:         v.ID,
+			Title:      v.Title,
+			Text:       v.Text,
+			Image:      v.Image,
+			Prefecture: v.Prefecture,
+			Address:    v.Address,
+			CreatedAt:  v.CreatedAt,
+			User: model.PostUserResponse{
+				ID:    user.ID,
+				Name:  user.Name,
+				Image: user.Image,
+			},
+			UserId:    v.UserId,
+			LikeCount: likeCount,
+			LikeId:    likeId,
+			Tags:      resTags,
+		}
 		resPosts = append(resPosts, p)
 	}
 	return resPosts, totalCount, nil
