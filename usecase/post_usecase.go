@@ -18,10 +18,11 @@ type IPostUsecase interface {
 }
 
 type postUsecase struct {
-	pr repository.IPostRepository
-	pv validator.IPostValidator
-	lr repository.ILikeRepository
-	tr repository.ITagRepository
+	pr  repository.IPostRepository
+	pv  validator.IPostValidator
+	lr  repository.ILikeRepository
+	tr  repository.ITagRepository
+	pcr repository.IPostCommentRepository
 }
 
 func NewPostUsecase(
@@ -29,8 +30,9 @@ func NewPostUsecase(
 	pv validator.IPostValidator,
 	lr repository.ILikeRepository,
 	tr repository.ITagRepository,
+	pcr repository.IPostCommentRepository,
 ) IPostUsecase {
-	return &postUsecase{pr, pv, lr, tr}
+	return &postUsecase{pr, pv, lr, tr, pcr}
 }
 
 func (pu *postUsecase) GetAllPosts() ([]model.PostResponse, error) {
@@ -94,6 +96,7 @@ func (pu *postUsecase) GetPostById(postId uint) (model.PostResponse, error) {
 func (pu *postUsecase) GetMyPosts(userId uint, page int, pageSize int) ([]model.PostResponse, []model.PostResponse, int, int, error) {
 	posts := []model.Post{}
 	tags := []model.Tag{}
+	postComments := []model.PostComment{}
 	totalCount, err := pu.pr.GetMyPosts(&posts, userId, page, pageSize)
 	if err != nil {
 		return nil, nil, 0, 0, err
@@ -134,6 +137,11 @@ func (pu *postUsecase) GetMyPosts(userId uint, page int, pageSize int) ([]model.
 			resTags = append(resTags, t)
 		}
 
+		postCommentCount, err := pu.pcr.GetPostCommentsByPostId(&postComments, v.ID, 0, 0)
+		if err != nil {
+			return nil, nil, 0, 0, err
+		}
+
 		p := model.PostResponse{
 			ID:         v.ID,
 			Title:      v.Title,
@@ -147,10 +155,11 @@ func (pu *postUsecase) GetMyPosts(userId uint, page int, pageSize int) ([]model.
 				Name:  v.User.Name,
 				Image: v.User.Image,
 			},
-			UserId:    v.UserId,
-			LikeCount: likeCount,
-			LikeId:    likeId,
-			Tags:      resTags,
+			UserId:       v.UserId,
+			LikeCount:    likeCount,
+			LikeId:       likeId,
+			Tags:         resTags,
+			CommentCount: uint(postCommentCount),
 		}
 		resPosts = append(resPosts, p)
 	}
@@ -196,6 +205,11 @@ func (pu *postUsecase) GetMyPosts(userId uint, page int, pageSize int) ([]model.
 			resTags = append(resTags, t)
 		}
 
+		postCommentCount, err := pu.pcr.GetPostCommentsByPostId(&postComments, v, 0, 0)
+		if err != nil {
+			return nil, nil, 0, 0, err
+		}
+
 		p := model.PostResponse{
 			ID:         post.ID,
 			Title:      post.Title,
@@ -209,10 +223,11 @@ func (pu *postUsecase) GetMyPosts(userId uint, page int, pageSize int) ([]model.
 				Name:  user.Name,
 				Image: user.Image,
 			},
-			UserId:    post.UserId,
-			LikeCount: likeCount,
-			LikeId:    likeId,
-			Tags:      resTags,
+			UserId:       post.UserId,
+			LikeCount:    likeCount,
+			LikeId:       likeId,
+			Tags:         resTags,
+			CommentCount: uint(postCommentCount),
 		}
 		resLikePosts = append(resLikePosts, p)
 	}
@@ -223,6 +238,7 @@ func (pu *postUsecase) GetMyPosts(userId uint, page int, pageSize int) ([]model.
 func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize int, userId uint) ([]model.PostResponse, int, error) {
 	posts := []model.Post{}
 	tags := []model.Tag{}
+	postComments := []model.PostComment{}
 	totalCount, err := pu.pr.GetPrefecturePosts(&posts, prefecture, page, pageSize)
 	if err != nil {
 		return nil, 0, err
@@ -263,6 +279,11 @@ func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize 
 			resTags = append(resTags, t)
 		}
 
+		postCommentCount, err := pu.pcr.GetPostCommentsByPostId(&postComments, v.ID, 0, 0)
+		if err != nil {
+			return nil, 0, err
+		}
+
 		p := model.PostResponse{
 			ID:         v.ID,
 			Title:      v.Title,
@@ -276,10 +297,11 @@ func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize 
 				Name:  user.Name,
 				Image: user.Image,
 			},
-			UserId:    v.UserId,
-			LikeCount: likeCount,
-			LikeId:    likeId,
-			Tags:      resTags,
+			UserId:       v.UserId,
+			LikeCount:    likeCount,
+			LikeId:       likeId,
+			Tags:         resTags,
+			CommentCount: uint(postCommentCount),
 		}
 
 		resPosts = append(resPosts, p)
@@ -290,6 +312,7 @@ func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize 
 func (pu *postUsecase) GetPostsByTagName(tagName string, page int, pageSize int, userId uint) ([]model.PostResponse, int, error) {
 	posts := []model.Post{}
 	tags := []model.Tag{}
+	postComments := []model.PostComment{}
 	totalCount, err := pu.tr.GetTagsByTagName(&tags, tagName, page, pageSize)
 	if err != nil {
 		return nil, 0, err
@@ -339,6 +362,12 @@ func (pu *postUsecase) GetPostsByTagName(tagName string, page int, pageSize int,
 			}
 			resTags = append(resTags, t)
 		}
+
+		postCommentCount, err := pu.pcr.GetPostCommentsByPostId(&postComments, v.ID, 0, 0)
+		if err != nil {
+			return nil, 0, err
+		}
+
 		p := model.PostResponse{
 			ID:         v.ID,
 			Title:      v.Title,
@@ -352,10 +381,11 @@ func (pu *postUsecase) GetPostsByTagName(tagName string, page int, pageSize int,
 				Name:  user.Name,
 				Image: user.Image,
 			},
-			UserId:    v.UserId,
-			LikeCount: likeCount,
-			LikeId:    likeId,
-			Tags:      resTags,
+			UserId:       v.UserId,
+			LikeCount:    likeCount,
+			LikeId:       likeId,
+			Tags:         resTags,
+			CommentCount: uint(postCommentCount),
 		}
 		resPosts = append(resPosts, p)
 	}
