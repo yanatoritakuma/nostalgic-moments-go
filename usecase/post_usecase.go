@@ -230,6 +230,7 @@ func (pu *postUsecase) GetMyPosts(userId uint, page int, pageSize int) ([]model.
 			CommentCount: uint(postCommentCount),
 		}
 		resLikePosts = append(resLikePosts, p)
+
 	}
 
 	return resPosts, resLikePosts, totalCount, totalLikeCount, nil
