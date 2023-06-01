@@ -4,6 +4,7 @@ import (
 	"nostalgic-moments-go/model"
 	"nostalgic-moments-go/repository"
 	"nostalgic-moments-go/validator"
+	"sort"
 )
 
 type IPostUsecase interface {
@@ -12,6 +13,7 @@ type IPostUsecase interface {
 	GetMyPosts(userId uint, page int, pageSize int) ([]model.PostResponse, []model.PostResponse, int, int, error)
 	GetPrefecturePosts(prefecture string, page int, pageSize int, userId uint) ([]model.PostResponse, int, error)
 	GetPostsByTagName(tagName string, page int, pageSize int, userId uint) ([]model.PostResponse, int, error)
+	GetPostByLikeTopTen(userId uint) ([]model.PostResponse, error)
 	CreatePost(post model.Post) (model.PostResponse, error)
 	UpdatePost(post model.Post, userId uint, postId uint) (model.PostResponse, error)
 	DeletePost(userId uint, postId uint) error
@@ -390,6 +392,97 @@ func (pu *postUsecase) GetPostsByTagName(tagName string, page int, pageSize int,
 		resPosts = append(resPosts, p)
 	}
 	return resPosts, totalCount, nil
+}
+
+func (pu *postUsecase) GetPostByLikeTopTen(userId uint) ([]model.PostResponse, error) {
+	posts := []model.Post{}
+	likes := []model.Like{}
+	tags := []model.Tag{}
+	postComments := []model.PostComment{}
+
+	err := pu.lr.GetLikeTopTen(&likes)
+	if err != nil {
+		return nil, err
+	}
+
+	postIds := []uint{}
+	for _, v := range likes {
+		postIds = append(postIds, v.PostId)
+	}
+
+	err = pu.pr.GetPostsByIds(&posts, postIds)
+	if err != nil {
+		return nil, err
+	}
+
+	resPosts := []model.PostResponse{}
+	for _, v := range posts {
+		user, err := pu.pr.GetUserById(v.UserId)
+		if err != nil {
+			return nil, err
+		}
+
+		likes := []model.Like{}
+		err = pu.pr.GetLikesByPostId(&likes, v.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		likeCount := uint(len(likes))
+		likeId := uint(0)
+		for _, like := range likes {
+			if like.UserId == userId {
+				likeId = uint(like.ID)
+			}
+		}
+
+		err = pu.tr.GetTagsByPostId(&tags, v.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		resTags := []model.TagResponse{}
+		for _, tag := range tags {
+			t := model.TagResponse{
+				ID:   tag.ID,
+				Name: tag.Name,
+			}
+			resTags = append(resTags, t)
+		}
+
+		postCommentCount, err := pu.pcr.GetPostCommentsByPostId(&postComments, v.ID, 0, 0)
+		if err != nil {
+			return nil, err
+		}
+
+		p := model.PostResponse{
+			ID:         v.ID,
+			Title:      v.Title,
+			Text:       v.Text,
+			Image:      v.Image,
+			Prefecture: v.Prefecture,
+			Address:    v.Address,
+			CreatedAt:  v.CreatedAt,
+			User: model.PostUserResponse{
+				ID:    user.ID,
+				Name:  user.Name,
+				Image: user.Image,
+			},
+			UserId:       v.UserId,
+			LikeCount:    likeCount,
+			LikeId:       likeId,
+			Tags:         resTags,
+			CommentCount: uint(postCommentCount),
+		}
+
+		resPosts = append(resPosts, p)
+	}
+
+	sort.Slice(resPosts, func(i, j int) bool {
+		return resPosts[i].LikeCount > resPosts[j].LikeCount
+	})
+
+	return resPosts, nil
 }
 
 func (pu *postUsecase) CreatePost(post model.Post) (model.PostResponse, error) {

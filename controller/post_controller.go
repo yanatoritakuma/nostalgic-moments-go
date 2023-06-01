@@ -16,6 +16,7 @@ type IPostController interface {
 	GetMyPosts(c echo.Context) error
 	GetPrefecturePosts(c echo.Context) error
 	GetPostsByTagName(c echo.Context) error
+	GetPostByLikeTopTen(c echo.Context) error
 	CreatePost(c echo.Context) error
 	UpdatePost(c echo.Context) error
 	DeletePost(c echo.Context) error
@@ -101,6 +102,20 @@ func (pc *postController) GetPostsByTagName(c echo.Context) error {
 	response := map[string]interface{}{
 		"totalPageCount": totalPageCount,
 		"posts":          postsRes,
+	}
+
+	return c.JSON(http.StatusOK, response)
+}
+
+func (pc *postController) GetPostByLikeTopTen(c echo.Context) error {
+	userId, _ := strconv.Atoi(c.QueryParam("userId"))
+	postsRes, err := pc.pu.GetPostByLikeTopTen(uint(userId))
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	response := map[string]interface{}{
+		"likeTopTenPosts": postsRes,
 	}
 
 	return c.JSON(http.StatusOK, response)
