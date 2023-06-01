@@ -3,6 +3,7 @@ package usecase
 import (
 	"nostalgic-moments-go/model"
 	"nostalgic-moments-go/repository"
+	"nostalgic-moments-go/validator"
 )
 
 type IPostCommentUsecase interface {
@@ -13,14 +14,19 @@ type IPostCommentUsecase interface {
 
 type postCommentUsecase struct {
 	pcr repository.IPostCommentRepository
+	pcv validator.IPostCommentValidator
 	pr  repository.IPostRepository
 }
 
-func NewPostCommentUsecase(pcr repository.IPostCommentRepository, pr repository.IPostRepository) IPostCommentUsecase {
-	return &postCommentUsecase{pcr, pr}
+func NewPostCommentUsecase(pcr repository.IPostCommentRepository, pr repository.IPostRepository, pcv validator.IPostCommentValidator) IPostCommentUsecase {
+	return &postCommentUsecase{pcr, pcv, pr}
 }
 
 func (pcu *postCommentUsecase) CreatePostComment(postComment model.PostComment) (model.PostCommentResponse, error) {
+	if err := pcu.pcv.PostCommentValidator(postComment); err != nil {
+		return model.PostCommentResponse{}, err
+	}
+
 	if err := pcu.pcr.CreatePostComment(&postComment); err != nil {
 		return model.PostCommentResponse{}, err
 	}
