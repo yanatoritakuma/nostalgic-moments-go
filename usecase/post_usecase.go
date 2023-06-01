@@ -110,7 +110,7 @@ func (pu *postUsecase) GetMyPosts(userId uint, page int, pageSize int) ([]model.
 	resPosts := []model.PostResponse{}
 	for _, v := range posts {
 		likes := []model.Like{}
-		err = pu.pr.GetLikesByPostID(&likes, v.ID)
+		err = pu.pr.GetLikesByPostId(&likes, v.ID)
 		if err != nil {
 			return nil, nil, 0, 0, err
 		}
@@ -168,7 +168,7 @@ func (pu *postUsecase) GetMyPosts(userId uint, page int, pageSize int) ([]model.
 	resLikePosts := []model.PostResponse{}
 	for _, v := range postIds {
 		likes := []model.Like{}
-		err = pu.pr.GetLikesByPostID(&likes, v)
+		err = pu.pr.GetLikesByPostId(&likes, v)
 		if err != nil {
 			return nil, nil, 0, 0, err
 		}
@@ -252,7 +252,7 @@ func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize 
 		}
 
 		likes := []model.Like{}
-		err = pu.pr.GetLikesByPostID(&likes, v.ID)
+		err = pu.pr.GetLikesByPostId(&likes, v.ID)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -336,7 +336,7 @@ func (pu *postUsecase) GetPostsByTagName(tagName string, page int, pageSize int,
 		}
 
 		likes := []model.Like{}
-		err = pu.pr.GetLikesByPostID(&likes, v.ID)
+		err = pu.pr.GetLikesByPostId(&likes, v.ID)
 		if err != nil {
 			return nil, 0, err
 		}
