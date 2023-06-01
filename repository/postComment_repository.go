@@ -36,7 +36,7 @@ func (pcr *postCommentRepository) GetPostCommentsByPostId(postComments *[]model.
 		return 0, err
 	}
 
-	if err := pcr.db.Where("post_id=?", postId).Order("created_at").Offset(offset).Limit(pageSize).Find(postComments).Error; err != nil {
+	if err := pcr.db.Where("post_id=?", postId).Order("created_at DESC").Offset(offset).Limit(pageSize).Find(postComments).Error; err != nil {
 		return 0, err
 	}
 	return int(totalCount), nil
