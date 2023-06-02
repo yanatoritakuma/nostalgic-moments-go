@@ -14,6 +14,7 @@ type ILikeRepository interface {
 	GetLikeByPostAndUser(postId uint, userId uint) (*model.Like, error)
 	GetMyLikeCount(userId uint) (int, error)
 	GetMyLikePostIdsByUserId(userId uint, page int, pageSize int) ([]uint, error)
+	GetLikeTopTen(likes *[]model.Like) error
 }
 
 type likeRepository struct {
@@ -78,4 +79,19 @@ func (lr *likeRepository) GetMyLikePostIdsByUserId(userId uint, page int, pageSi
 	}
 
 	return postIds, nil
+}
+
+func (lr *likeRepository) GetLikeTopTen(likes *[]model.Like) error {
+	query := lr.db.Raw(`
+        SELECT post_id, COUNT(*) AS total_likes
+        FROM likes
+        GROUP BY post_id
+        ORDER BY total_likes DESC
+        LIMIT 10
+    `).Scan(likes)
+
+	if query.Error != nil {
+		return query.Error
+	}
+	return nil
 }

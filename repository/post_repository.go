@@ -18,7 +18,7 @@ type IPostRepository interface {
 	CreatePost(post *model.Post) error
 	UpdatePost(post *model.Post, userId uint, postId uint) error
 	DeletePost(userId uint, postId uint) error
-	GetLikesByPostID(likes *[]model.Like, postID uint) error
+	GetLikesByPostId(likes *[]model.Like, postID uint) error
 }
 
 type postRepository struct {
@@ -123,6 +123,6 @@ func (pr *postRepository) DeletePost(userId uint, postId uint) error {
 	return nil
 }
 
-func (pr *postRepository) GetLikesByPostID(likes *[]model.Like, postId uint) error {
+func (pr *postRepository) GetLikesByPostId(likes *[]model.Like, postId uint) error {
 	return pr.db.Where("post_id=?", postId).Find(likes).Error
 }
