@@ -21,7 +21,7 @@ func main() {
 	postCommentRepositor := repository.NewPostCommentRepository(db)
 	followRepositor := repository.NewFollowRepository(db)
 	userUsecase := usecase.NweUserUsecase(userRepository, userValidator)
-	postUsecase := usecase.NewPostUsecase(postRepositor, postValidator, likeRepositor, tagRepositor, postCommentRepositor)
+	postUsecase := usecase.NewPostUsecase(postRepositor, postValidator, likeRepositor, tagRepositor, postCommentRepositor, followRepositor)
 	likeUsecase := usecase.NewLikeUsecase(likeRepositor)
 	tagUsecase := usecase.NewTagUsecase(tagRepositor)
 	postCommentUsecase := usecase.NewPostCommentUsecase(postCommentRepositor, postRepositor, postCommentValidator)
