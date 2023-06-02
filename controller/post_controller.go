@@ -168,5 +168,4 @@ func (pc *postController) DeletePost(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 	return c.NoContent(http.StatusNoContent)
-
 }
