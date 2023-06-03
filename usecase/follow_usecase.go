@@ -1,6 +1,8 @@
 package usecase
 
 import (
+	"errors"
+	"fmt"
 	"nostalgic-moments-go/model"
 	"nostalgic-moments-go/repository"
 )
@@ -20,6 +22,14 @@ func NewFollowUsecase(fr repository.IFollowRepository) IFollowUsecase {
 }
 
 func (fu *followUsecase) CreateFollow(follow model.Follow) (model.FollowResponse, error) {
+	existingFollow, err := fu.fr.IsFollowing(60, follow.FollowUserId)
+	if err != nil {
+		return model.FollowResponse{}, err
+	}
+	fmt.Print(existingFollow)
+	if existingFollow != 0 {
+		return model.FollowResponse{}, errors.New("duplicate follow")
+	}
 	if err := fu.fr.CreateFollow(&follow); err != nil {
 		return model.FollowResponse{}, err
 	}
