@@ -34,7 +34,7 @@ func (fc *followController) CreateFollow(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 	follow.UserId = uint(userId.(float64))
-	followRes, err := fc.fu.CreateFollow(follow)
+	followRes, err := fc.fu.CreateFollow(follow, uint(userId.(float64)))
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}

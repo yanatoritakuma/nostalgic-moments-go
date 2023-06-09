@@ -13,7 +13,7 @@ type IFollowRepository interface {
 	DeleteFollow(userId uint, followId uint) error
 	GetFollow(follows *[]model.Follow, userId uint, page int, pageSize int) (int, error)
 	GetFollower(follows *[]model.Follow, userId uint, page int, pageSize int) (int, error)
-	IsFollowing(userId uint, followUserId uint) (uint, error)
+	Following(userId uint, followUserId uint) (uint, error)
 }
 
 type followRepository struct {
@@ -72,7 +72,7 @@ func (fr *followRepository) GetFollower(follows *[]model.Follow, userId uint, pa
 	return int(totalCount), nil
 }
 
-func (fr *followRepository) IsFollowing(userId uint, followUserId uint) (uint, error) {
+func (fr *followRepository) Following(userId uint, followUserId uint) (uint, error) {
 	var follow model.Follow
 	err := fr.db.Where("user_id = ? AND follow_user_id = ?", userId, followUserId).Order("created_at").First(&follow).Error
 	if err != nil {

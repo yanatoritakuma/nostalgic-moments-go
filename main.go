@@ -25,7 +25,7 @@ func main() {
 	likeUsecase := usecase.NewLikeUsecase(likeRepositor)
 	tagUsecase := usecase.NewTagUsecase(tagRepositor)
 	postCommentUsecase := usecase.NewPostCommentUsecase(postCommentRepositor, postRepositor, postCommentValidator)
-	followUsecase := usecase.NewFollowUsecase(followRepositor)
+	followUsecase := usecase.NewFollowUsecase(followRepositor, postRepositor)
 	userController := controller.NewUserController(userUsecase)
 	postController := controller.NewPostController(postUsecase)
 	likeController := controller.NewLikeController(likeUsecase)

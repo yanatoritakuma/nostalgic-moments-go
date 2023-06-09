@@ -8,21 +8,22 @@ import (
 )
 
 type IFollowUsecase interface {
-	CreateFollow(follow model.Follow) (model.FollowResponse, error)
+	CreateFollow(follow model.Follow, userId uint) (model.FollowResponse, error)
 	DeleteFollow(userId uint, followId uint) error
 	GetFollow(userId uint, page int, pageSize int) ([]model.FollowResponse, int, []model.FollowResponse, int, error)
 }
 
 type followUsecase struct {
 	fr repository.IFollowRepository
+	pr repository.IPostRepository
 }
 
-func NewFollowUsecase(fr repository.IFollowRepository) IFollowUsecase {
-	return &followUsecase{fr}
+func NewFollowUsecase(fr repository.IFollowRepository, pr repository.IPostRepository) IFollowUsecase {
+	return &followUsecase{fr, pr}
 }
 
-func (fu *followUsecase) CreateFollow(follow model.Follow) (model.FollowResponse, error) {
-	existingFollow, err := fu.fr.IsFollowing(60, follow.FollowUserId)
+func (fu *followUsecase) CreateFollow(follow model.Follow, userId uint) (model.FollowResponse, error) {
+	existingFollow, err := fu.fr.Following(userId, follow.FollowUserId)
 	if err != nil {
 		return model.FollowResponse{}, err
 	}
@@ -58,10 +59,26 @@ func (fu *followUsecase) GetFollow(userId uint, page int, pageSize int) ([]model
 
 	resFollows := []model.FollowResponse{}
 	for _, v := range follows {
+		user, err := fu.pr.GetUserById(v.FollowUserId)
+		if err != nil {
+			return nil, 0, nil, 0, err
+		}
+		fmt.Print("v", v.FollowUserId)
+		existingFollow, err := fu.fr.Following(userId, v.FollowUserId)
+		if err != nil {
+			return nil, 0, nil, 0, err
+		}
+
 		f := model.FollowResponse{
 			ID:           v.ID,
 			FollowUserId: v.FollowUserId,
 			UserId:       v.UserId,
+			User: model.FollowUserResponse{
+				ID:           user.ID,
+				Name:         user.Name,
+				Image:        user.Image,
+				FollowBackId: existingFollow,
+			},
 		}
 		resFollows = append(resFollows, f)
 	}
@@ -71,11 +88,28 @@ func (fu *followUsecase) GetFollow(userId uint, page int, pageSize int) ([]model
 		return nil, 0, nil, 0, err
 	}
 	resFollower := []model.FollowResponse{}
+
 	for _, v := range followers {
+		user, err := fu.pr.GetUserById(v.UserId)
+		if err != nil {
+			return nil, 0, nil, 0, err
+		}
+
+		existingFollow, err := fu.fr.Following(userId, v.UserId)
+		if err != nil {
+			return nil, 0, nil, 0, err
+		}
+
 		f := model.FollowResponse{
 			ID:           v.ID,
 			FollowUserId: v.FollowUserId,
 			UserId:       v.UserId,
+			User: model.FollowUserResponse{
+				ID:           user.ID,
+				Name:         user.Name,
+				Image:        user.Image,
+				FollowBackId: existingFollow,
+			},
 		}
 		resFollower = append(resFollower, f)
 	}

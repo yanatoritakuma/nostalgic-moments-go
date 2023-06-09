@@ -214,7 +214,7 @@ func (pu *postUsecase) GetMyPosts(userId uint, page int, pageSize int) ([]model.
 			return nil, nil, 0, 0, err
 		}
 
-		followId, err := pu.fr.IsFollowing(userId, post.UserId)
+		followId, err := pu.fr.Following(userId, post.UserId)
 		if err != nil {
 			return nil, nil, 0, 0, err
 		}
@@ -294,7 +294,7 @@ func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize 
 			return nil, 0, err
 		}
 
-		followId, err := pu.fr.IsFollowing(userId, v.UserId)
+		followId, err := pu.fr.Following(userId, v.UserId)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -384,7 +384,7 @@ func (pu *postUsecase) GetPostsByTagName(tagName string, page int, pageSize int,
 			return nil, 0, err
 		}
 
-		followId, err := pu.fr.IsFollowing(userId, v.UserId)
+		followId, err := pu.fr.Following(userId, v.UserId)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -475,7 +475,7 @@ func (pu *postUsecase) GetPostByLikeTopTen(userId uint) ([]model.PostResponse, e
 			return nil, err
 		}
 
-		followId, err := pu.fr.IsFollowing(userId, v.UserId)
+		followId, err := pu.fr.Following(userId, v.UserId)
 		if err != nil {
 			return nil, err
 		}
