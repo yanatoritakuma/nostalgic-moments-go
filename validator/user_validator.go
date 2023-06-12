@@ -34,7 +34,7 @@ func (uv *userValidator) UserValidate(user model.User) error {
 		validation.Field(
 			&user.Name,
 			validation.Required.Error("name is required"),
-			validation.RuneLength(1, 30).Error("limited min 6 max 30 char"),
+			validation.RuneLength(1, 30).Error("limited min 1 max 30 char"),
 		),
 	)
 }
