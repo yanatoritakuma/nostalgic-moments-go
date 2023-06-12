@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"errors"
-	"fmt"
 	"nostalgic-moments-go/model"
 	"nostalgic-moments-go/repository"
 )
@@ -27,7 +26,6 @@ func (fu *followUsecase) CreateFollow(follow model.Follow, userId uint) (model.F
 	if err != nil {
 		return model.FollowResponse{}, err
 	}
-	fmt.Print(existingFollow)
 	if existingFollow != 0 {
 		return model.FollowResponse{}, errors.New("duplicate follow")
 	}
@@ -63,7 +61,6 @@ func (fu *followUsecase) GetFollow(userId uint, page int, pageSize int) ([]model
 		if err != nil {
 			return nil, 0, nil, 0, err
 		}
-		fmt.Print("v", v.FollowUserId)
 		existingFollow, err := fu.fr.Following(userId, v.FollowUserId)
 		if err != nil {
 			return nil, 0, nil, 0, err
