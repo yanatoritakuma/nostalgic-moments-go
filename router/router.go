@@ -60,6 +60,7 @@ func NewRouter(
 	p.POST("", pc.CreatePost)
 	p.PUT("/:postId", pc.UpdatePost)
 	p.DELETE("/:postId", pc.DeletePost)
+	p.GET("/timeLine", pc.GetFollowPosts)
 
 	// JWTが必須でないエンドポイント
 	e.GET("/posts", pc.GetAllPosts)

@@ -13,6 +13,7 @@ type IFollowRepository interface {
 	DeleteFollow(userId uint, followId uint) error
 	GetFollow(follows *[]model.Follow, userId uint, page int, pageSize int) (int, error)
 	GetFollower(follows *[]model.Follow, userId uint, page int, pageSize int) (int, error)
+	GetFollowIds(userId uint) ([]uint, error)
 	Following(userId uint, followUserId uint) (uint, error)
 }
 
@@ -70,6 +71,19 @@ func (fr *followRepository) GetFollower(follows *[]model.Follow, userId uint, pa
 	}
 
 	return int(totalCount), nil
+}
+
+func (fr *followRepository) GetFollowIds(userId uint) ([]uint, error) {
+	var follows []model.Follow
+	if err := fr.db.Where("user_id IN (?)", userId).Order("created_at DESC").Find(&follows).Error; err != nil {
+		return nil, err
+	}
+	var followIds []uint
+	for _, follow := range follows {
+		followIds = append(followIds, follow.FollowUserId)
+	}
+
+	return followIds, nil
 }
 
 func (fr *followRepository) Following(userId uint, followUserId uint) (uint, error) {
