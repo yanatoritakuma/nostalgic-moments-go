@@ -14,6 +14,7 @@ type IPostUsecase interface {
 	GetPrefecturePosts(prefecture string, page int, pageSize int, userId uint) ([]model.PostResponse, int, error)
 	GetPostsByTagName(tagName string, page int, pageSize int, userId uint) ([]model.PostResponse, int, error)
 	GetPostByLikeTopTen(userId uint) ([]model.PostResponse, error)
+	GetFollowPosts(userId uint, page int, pageSize int) ([]model.PostResponse, int, error)
 	CreatePost(post model.Post) (model.PostResponse, error)
 	UpdatePost(post model.Post, userId uint, postId uint) (model.PostResponse, error)
 	DeletePost(userId uint, postId uint) error
@@ -25,6 +26,7 @@ type postUsecase struct {
 	lr  repository.ILikeRepository
 	tr  repository.ITagRepository
 	pcr repository.IPostCommentRepository
+	fr  repository.IFollowRepository
 }
 
 func NewPostUsecase(
@@ -33,8 +35,9 @@ func NewPostUsecase(
 	lr repository.ILikeRepository,
 	tr repository.ITagRepository,
 	pcr repository.IPostCommentRepository,
+	fr repository.IFollowRepository,
 ) IPostUsecase {
-	return &postUsecase{pr, pv, lr, tr, pcr}
+	return &postUsecase{pr, pv, lr, tr, pcr, fr}
 }
 
 func (pu *postUsecase) GetAllPosts() ([]model.PostResponse, error) {
@@ -212,6 +215,11 @@ func (pu *postUsecase) GetMyPosts(userId uint, page int, pageSize int) ([]model.
 			return nil, nil, 0, 0, err
 		}
 
+		followId, err := pu.fr.Following(userId, post.UserId)
+		if err != nil {
+			return nil, nil, 0, 0, err
+		}
+
 		p := model.PostResponse{
 			ID:         post.ID,
 			Title:      post.Title,
@@ -230,6 +238,7 @@ func (pu *postUsecase) GetMyPosts(userId uint, page int, pageSize int) ([]model.
 			LikeId:       likeId,
 			Tags:         resTags,
 			CommentCount: uint(postCommentCount),
+			FollowID:     followId,
 		}
 		resLikePosts = append(resLikePosts, p)
 	}
@@ -286,6 +295,11 @@ func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize 
 			return nil, 0, err
 		}
 
+		followId, err := pu.fr.Following(userId, v.UserId)
+		if err != nil {
+			return nil, 0, err
+		}
+
 		p := model.PostResponse{
 			ID:         v.ID,
 			Title:      v.Title,
@@ -304,6 +318,7 @@ func (pu *postUsecase) GetPrefecturePosts(prefecture string, page int, pageSize 
 			LikeId:       likeId,
 			Tags:         resTags,
 			CommentCount: uint(postCommentCount),
+			FollowID:     followId,
 		}
 
 		resPosts = append(resPosts, p)
@@ -370,6 +385,11 @@ func (pu *postUsecase) GetPostsByTagName(tagName string, page int, pageSize int,
 			return nil, 0, err
 		}
 
+		followId, err := pu.fr.Following(userId, v.UserId)
+		if err != nil {
+			return nil, 0, err
+		}
+
 		p := model.PostResponse{
 			ID:         v.ID,
 			Title:      v.Title,
@@ -388,6 +408,7 @@ func (pu *postUsecase) GetPostsByTagName(tagName string, page int, pageSize int,
 			LikeId:       likeId,
 			Tags:         resTags,
 			CommentCount: uint(postCommentCount),
+			FollowID:     followId,
 		}
 		resPosts = append(resPosts, p)
 	}
@@ -455,6 +476,11 @@ func (pu *postUsecase) GetPostByLikeTopTen(userId uint) ([]model.PostResponse, e
 			return nil, err
 		}
 
+		followId, err := pu.fr.Following(userId, v.UserId)
+		if err != nil {
+			return nil, err
+		}
+
 		p := model.PostResponse{
 			ID:         v.ID,
 			Title:      v.Title,
@@ -473,6 +499,7 @@ func (pu *postUsecase) GetPostByLikeTopTen(userId uint) ([]model.PostResponse, e
 			LikeId:       likeId,
 			Tags:         resTags,
 			CommentCount: uint(postCommentCount),
+			FollowID:     followId,
 		}
 
 		resPosts = append(resPosts, p)
@@ -483,6 +510,92 @@ func (pu *postUsecase) GetPostByLikeTopTen(userId uint) ([]model.PostResponse, e
 	})
 
 	return resPosts, nil
+}
+
+func (pu *postUsecase) GetFollowPosts(userId uint, page int, pageSize int) ([]model.PostResponse, int, error) {
+	posts := []model.Post{}
+	tags := []model.Tag{}
+	postComments := []model.PostComment{}
+
+	followIds, err := pu.fr.GetFollowIds(userId)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	totalCount, err := pu.pr.GetFollowPosts(&posts, followIds, page, pageSize)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	resPosts := []model.PostResponse{}
+	for _, v := range posts {
+		user, err := pu.pr.GetUserById(v.UserId)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		likes := []model.Like{}
+		err = pu.pr.GetLikesByPostId(&likes, v.ID)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		likeCount := uint(len(likes))
+		likeId := uint(0)
+		for _, like := range likes {
+			if like.UserId == userId {
+				likeId = uint(like.ID)
+			}
+		}
+
+		err = pu.tr.GetTagsByPostId(&tags, v.ID)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		resTags := []model.TagResponse{}
+		for _, tag := range tags {
+			t := model.TagResponse{
+				ID:   tag.ID,
+				Name: tag.Name,
+			}
+			resTags = append(resTags, t)
+		}
+
+		postCommentCount, err := pu.pcr.GetPostCommentsByPostId(&postComments, v.ID, 0, 0)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		followId, err := pu.fr.Following(userId, v.UserId)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		p := model.PostResponse{
+			ID:         v.ID,
+			Title:      v.Title,
+			Text:       v.Text,
+			Image:      v.Image,
+			Prefecture: v.Prefecture,
+			Address:    v.Address,
+			CreatedAt:  v.CreatedAt,
+			User: model.PostUserResponse{
+				ID:    user.ID,
+				Name:  user.Name,
+				Image: user.Image,
+			},
+			UserId:       v.UserId,
+			LikeCount:    likeCount,
+			LikeId:       likeId,
+			Tags:         resTags,
+			CommentCount: uint(postCommentCount),
+			FollowID:     followId,
+		}
+
+		resPosts = append(resPosts, p)
+	}
+	return resPosts, totalCount, nil
 }
 
 func (pu *postUsecase) CreatePost(post model.Post) (model.PostResponse, error) {

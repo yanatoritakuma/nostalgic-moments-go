@@ -10,7 +10,14 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-func NewRouter(uc controller.IUserController, pc controller.IPostController, lc controller.ILikeController, tc controller.ITagController, pcc controller.IPostCommentController) *echo.Echo {
+func NewRouter(
+	uc controller.IUserController,
+	pc controller.IPostController,
+	lc controller.ILikeController,
+	tc controller.ITagController,
+	pcc controller.IPostCommentController,
+	fc controller.IFollowController,
+) *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"http://localhost:3000", os.Getenv("FE_URL")},
@@ -53,6 +60,7 @@ func NewRouter(uc controller.IUserController, pc controller.IPostController, lc 
 	p.POST("", pc.CreatePost)
 	p.PUT("/:postId", pc.UpdatePost)
 	p.DELETE("/:postId", pc.DeletePost)
+	p.GET("/timeLine", pc.GetFollowPosts)
 
 	// JWTが必須でないエンドポイント
 	e.GET("/posts", pc.GetAllPosts)
@@ -89,6 +97,16 @@ func NewRouter(uc controller.IUserController, pc controller.IPostController, lc 
 	c.DELETE("/:commentId", pcc.DeletePostComment)
 	// JWTが必須でないエンドポイント
 	e.GET("/postComment/:postId", pcc.GetPostCommentsByPostId)
+
+	f := e.Group("/follows")
+	// JWTが必須なエンドポイント
+	f.Use(echojwt.WithConfig(echojwt.Config{
+		SigningKey:  []byte(os.Getenv("SECRET")),
+		TokenLookup: "cookie:token",
+	}))
+	f.POST("", fc.CreateFollow)
+	f.DELETE("/:followId", fc.DeleteFollow)
+	f.GET("", fc.GetFollow)
 
 	return e
 }

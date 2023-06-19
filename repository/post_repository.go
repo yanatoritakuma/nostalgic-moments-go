@@ -15,6 +15,7 @@ type IPostRepository interface {
 	GetMyPosts(posts *[]model.Post, userId uint, page int, pageSize int) (int, error)
 	GetPrefecturePosts(posts *[]model.Post, prefecture string, page int, pageSize int) (int, error)
 	GetUserById(id uint) (*model.User, error)
+	GetFollowPosts(posts *[]model.Post, followIds []uint, page int, pageSize int) (int, error)
 	CreatePost(post *model.Post) error
 	UpdatePost(post *model.Post, userId uint, postId uint) error
 	DeletePost(userId uint, postId uint) error
@@ -86,6 +87,20 @@ func (pr *postRepository) GetUserById(id uint) (*model.User, error) {
 		return nil, result.Error
 	}
 	return user, nil
+}
+
+func (pr *postRepository) GetFollowPosts(posts *[]model.Post, followIds []uint, page int, pageSize int) (int, error) {
+	offset := (page - 1) * pageSize
+	var totalCount int64
+
+	if err := pr.db.Model(&model.Post{}).Where("user_id IN (?)", followIds).Count(&totalCount).Error; err != nil {
+		return 0, err
+	}
+
+	if err := pr.db.Where("user_id IN (?)", followIds).Order("created_at DESC").Offset(offset).Limit(pageSize).Find(posts).Error; err != nil {
+		return 0, err
+	}
+	return int(totalCount), nil
 }
 
 func (pr *postRepository) CreatePost(post *model.Post) error {

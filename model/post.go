@@ -29,6 +29,7 @@ type PostResponse struct {
 	LikeId       uint             `json:"like_id"`
 	Tags         []TagResponse    `json:"tagResponse"`
 	CommentCount uint             `json:"commentCount"`
+	FollowID     uint             `json:"follow_id"`
 }
 
 type PostUserResponse struct {

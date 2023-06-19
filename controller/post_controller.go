@@ -17,6 +17,7 @@ type IPostController interface {
 	GetPrefecturePosts(c echo.Context) error
 	GetPostsByTagName(c echo.Context) error
 	GetPostByLikeTopTen(c echo.Context) error
+	GetFollowPosts(c echo.Context) error
 	CreatePost(c echo.Context) error
 	UpdatePost(c echo.Context) error
 	DeletePost(c echo.Context) error
@@ -121,6 +122,26 @@ func (pc *postController) GetPostByLikeTopTen(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
+func (pc *postController) GetFollowPosts(c echo.Context) error {
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	userId := claims["user_id"]
+	page, _ := strconv.Atoi(c.QueryParam("page"))
+	pageSize, _ := strconv.Atoi(c.QueryParam("pageSize"))
+
+	postsRes, totalPageCount, err := pc.pu.GetFollowPosts(uint(userId.(float64)), page, pageSize)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	response := map[string]interface{}{
+		"totalPageCount": totalPageCount,
+		"posts":          postsRes,
+	}
+
+	return c.JSON(http.StatusOK, response)
+}
+
 func (pc *postController) CreatePost(c echo.Context) error {
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
@@ -168,5 +189,4 @@ func (pc *postController) DeletePost(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 	return c.NoContent(http.StatusNoContent)
-
 }
