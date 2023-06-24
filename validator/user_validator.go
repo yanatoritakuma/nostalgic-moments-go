@@ -30,6 +30,7 @@ func (uv *userValidator) UserValidate(user model.User) error {
 			&user.Password,
 			validation.Required.Error("password is required"),
 			validation.RuneLength(6, 30).Error("limited min 6 max 30 char"),
+			is.Alphanumeric.Error("password must be alphanumeric"),
 		),
 		validation.Field(
 			&user.Name,
